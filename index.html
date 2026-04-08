@@ -190,6 +190,110 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 .weather-info { font-size:.8rem; color:#AAA; padding:8px 2px 2px; min-height:22px; }
 .modal-close { margin-top:20px; width:100%; padding:16px; border-radius:var(--r-md); border:none; background:#F0F0F0; font-size:1.05rem; font-weight:700; color:#555; cursor:pointer; transition:background .15s; }
 .modal-close:active { background:#E0E0E0; }
+
+/* ══ PLAN SCREEN ══ */
+#screen-plan {
+  flex-direction:row; overflow:hidden; height:100dvh; height:100vh;
+}
+
+.plan-library {
+  width:35%; padding:16px; overflow-y:auto;
+  border-right:2px solid #F0E8DC; background:#FFF8F0;
+  display:flex; flex-direction:column;
+}
+.plan-lib-title {
+  font-size:.82rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:.08em; color:var(--muted); margin:12px 0 8px;
+}
+.plan-lib-title:first-child { margin-top:0; }
+.plan-lib-card {
+  background:#fff; border-radius:var(--r-md); padding:12px;
+  display:flex; align-items:center; gap:10px; box-shadow:var(--sh-s);
+  cursor:grab; touch-action:none; margin-bottom:8px;
+  border:3px solid transparent; transition:opacity .2s;
+}
+.plan-lib-card .card-emoji { font-size:2rem; flex-shrink:0; }
+.plan-lib-card .card-info  { flex:1; }
+.plan-lib-card .card-name  { font-size:.9rem; font-weight:600; }
+.plan-lib-card .card-dur   { font-size:.75rem; color:var(--muted); }
+.plan-lib-card.used        { opacity:.35; pointer-events:none; }
+.plan-lib-card.locked      { opacity:.35; pointer-events:none; border-style:dashed; border-color:#CCC; }
+@keyframes unlockPop {
+  0%   { transform:scale(.9); opacity:.3; }
+  100% { transform:scale(1);  opacity:1;  }
+}
+
+.plan-timeline-wrap {
+  flex:1; display:flex; flex-direction:column; padding:16px; gap:10px; overflow:hidden;
+}
+.plan-tl-header {
+  display:flex; justify-content:space-between; align-items:center; flex-shrink:0;
+}
+.plan-tl-title  { font-size:1.1rem; font-weight:700; }
+.plan-free-label {
+  font-size:.9rem; font-weight:600; color:var(--teal-dk);
+  background:#EEF8F7; padding:4px 10px; border-radius:20px;
+}
+.plan-timeline {
+  flex:1; background:#F8F4F0; border-radius:var(--r-md);
+  overflow-y:auto; position:relative; min-height:100px;
+  padding:6px 0;
+}
+.plan-timeline-empty {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:1rem; color:var(--muted); pointer-events:none; text-align:center; padding:20px;
+}
+
+.plan-block {
+  border-radius:10px; padding:8px 10px; margin:3px 8px;
+  display:flex; align-items:center; gap:8px; position:relative;
+  cursor:grab; touch-action:none; transition:box-shadow .15s;
+  box-sizing:border-box;
+}
+.plan-block.mandatory { background:linear-gradient(135deg,#9DD4CF,#7BBFBA); color:#1A3D3A; }
+.plan-block.choice    { background:linear-gradient(135deg,#B5A8D5,#9A8BC4); color:#2A1A5A; }
+.plan-block .block-emoji  { font-size:1.4rem; flex-shrink:0; }
+.plan-block .block-name   { font-size:.88rem; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.plan-block .block-dur    { font-size:.75rem; opacity:.75; flex-shrink:0; }
+.plan-block .block-remove {
+  width:22px; height:22px; border-radius:50%; border:none;
+  background:rgba(0,0,0,.18); color:white; font-size:.75rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  line-height:1; padding:0;
+}
+.plan-block .block-remove:active { background:rgba(0,0,0,.38); }
+.plan-block.tl-dragging { opacity:.5; }
+
+.plan-free-block {
+  margin:3px 8px; border-radius:10px;
+  background:repeating-linear-gradient(45deg,#E8F5F3,#E8F5F3 8px,#F0FAF8 8px,#F0FAF8 16px);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.85rem; font-weight:600; color:var(--teal-dk); min-height:30px;
+}
+
+.plan-drop-indicator {
+  height:4px; margin:0 8px; border-radius:2px;
+  background:var(--teal); box-shadow:0 0 8px var(--teal); pointer-events:none;
+}
+
+.btn-letsgo {
+  flex-shrink:0; padding:14px 20px; border-radius:var(--r-lg);
+  border:none; background:linear-gradient(135deg,#A8D5B5,#6BB88A);
+  color:#1A5E34; font-size:1.2rem; font-weight:800; cursor:pointer;
+  box-shadow:var(--sh); transition:transform .15s;
+}
+.btn-letsgo:active { transform:scale(.96); }
+.btn-letsgo.hidden { display:none; }
+
+/* Portrait rotation hint */
+.landscape-hint { display:none; }
+@media (orientation:portrait) {
+  #screen-plan .landscape-hint {
+    display:flex; position:fixed; inset:0; background:rgba(255,248,240,.97);
+    align-items:center; justify-content:center; flex-direction:column; gap:16px;
+    z-index:300; font-size:1.4rem; font-weight:700; text-align:center; padding:32px;
+  }
+}
 </style>
 </head>
 <body>
@@ -219,6 +323,22 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   <div class="routine-body">
     <div id="task-list"></div>
   </div>
+</div>
+
+<!-- ══ PLAN SCREEN ══ -->
+<div id="screen-plan" class="screen">
+  <div class="plan-library" id="plan-library"></div>
+  <div class="plan-timeline-wrap">
+    <div class="plan-tl-header">
+      <div class="plan-tl-title">19:25 – 21:00</div>
+      <div class="plan-free-label" id="plan-free-label">⏱ … min frei</div>
+    </div>
+    <div class="plan-timeline" id="plan-timeline">
+      <div class="plan-timeline-empty" id="plan-timeline-empty">← Aufgaben hierher ziehen</div>
+    </div>
+    <button class="btn-letsgo hidden" id="btn-letsgo" onclick="finishPlanning()">Los geht's! 🚀</button>
+  </div>
+  <div class="landscape-hint">📱↔️<br>Bitte Tablet quer halten</div>
 </div>
 
 <!-- ══ COMPLETION OVERLAY ══ -->
@@ -289,7 +409,7 @@ const TASKS = {
 // ── STATE ────────────────────────────────────────────────────────
 
 function newRoutine() {
-  return { date:null, order:null, completed:[], globalStart:null };
+  return { date:null, order:null, completed:[], globalStart:null, planDone:false };
 }
 
 function defaults() {
@@ -410,6 +530,7 @@ function showHome() {
 function showRoutine(mode) {
   currentMode = mode;
   resetDaily();
+  if (mode === 'evening' && !state.evening.planDone) { showPlan('evening'); return; }
   if (!state[mode].order) { state[mode].order = getDefaultOrder(mode); save(); }
   renderRoutine();
   switchScreen('screen-routine');
@@ -520,6 +641,305 @@ function finishTask(id) {
     renderRoutine();
     updateTimeDisplay();
   }, 320);
+}
+
+// ── PLAN SCREEN ──────────────────────────────────────────────────
+
+const EVENING_TOTAL_MIN = 95;   // 19:25 – 21:00
+const TIMELINE_SCALE    = 6.4;  // px per minute
+const BLOCK_MIN_H       = 44;   // px minimum block height
+
+let planOrder = [];   // task IDs currently in timeline
+let planDrag  = null; // active drag state
+
+function blockH(durationMin) {
+  return Math.max(BLOCK_MIN_H, durationMin * TIMELINE_SCALE);
+}
+
+function getPlannedMin() {
+  const all = getAllTasks('evening');
+  return planOrder.reduce((s, id) => {
+    const t = all.find(x => x.id === id);
+    return s + (t?.duration ?? 0);
+  }, 0);
+}
+
+function showPlan(mode) {
+  planOrder = [];
+  renderPlanLibrary(mode);
+  renderPlanTimeline(mode);
+  updateFreeTimeLabel();
+  switchScreen('screen-plan');
+  try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {}
+}
+
+function renderPlanLibrary(mode) {
+  const lib = document.getElementById('plan-library');
+  const mandatory = visibleMandatory(mode);
+  const choice    = TASKS[mode].choice;
+  const allMandatoryPlaced = mandatory.every(t => planOrder.includes(t.id));
+
+  let html = `<div class="plan-lib-title">Pflicht</div>`;
+  mandatory.forEach(t => {
+    const used = planOrder.includes(t.id);
+    html += `<div class="plan-lib-card${used ? ' used' : ''}" data-id="${t.id}" data-type="mandatory">
+      <div class="card-emoji">${t.emoji}</div>
+      <div class="card-info">
+        <div class="card-name">${t.label}</div>
+        <div class="card-dur">${t.duration} min</div>
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="plan-lib-title" style="margin-top:16px">Wahl</div>`;
+  choice.forEach(t => {
+    const used   = planOrder.includes(t.id);
+    const locked = !allMandatoryPlaced && !used;
+    html += `<div class="plan-lib-card${used ? ' used' : locked ? ' locked' : ''}" data-id="${t.id}" data-type="choice">
+      <div class="card-emoji">${t.emoji}</div>
+      <div class="card-info">
+        <div class="card-name">${t.label}</div>
+        <div class="card-dur">${t.duration} min</div>
+      </div>
+    </div>`;
+  });
+
+  lib.innerHTML = html;
+  initPlanLibDrag(lib);
+}
+
+function renderPlanTimeline() {
+  const tl      = document.getElementById('plan-timeline');
+  const empty   = document.getElementById('plan-timeline-empty');
+  const all     = getAllTasks('evening');
+  const freeMin = EVENING_TOTAL_MIN - getPlannedMin();
+
+  if (!planOrder.length) {
+    tl.innerHTML = '';
+    tl.appendChild(empty);
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  let html = '';
+  planOrder.forEach(id => {
+    const t     = all.find(x => x.id === id);
+    if (!t) return;
+    const h     = blockH(t.duration);
+    const type  = TASKS.evening.mandatory.some(m => m.id === id) ? 'mandatory' : 'choice';
+    html += `<div class="plan-block ${type}" data-id="${id}" style="height:${h}px">
+      <span class="block-emoji">${t.emoji}</span>
+      <span class="block-name">${t.label}</span>
+      <span class="block-dur">${t.duration} min</span>
+      <button class="block-remove" onclick="removeFromTimeline('${id}')">✕</button>
+    </div>`;
+  });
+
+  if (freeMin > 0) {
+    const h = Math.max(30, freeMin * TIMELINE_SCALE);
+    html += `<div class="plan-free-block" style="height:${h}px">✨ ${Math.round(freeMin)} min frei</div>`;
+  }
+
+  tl.innerHTML = html;
+  initPlanTimelineDrag(tl);
+}
+
+function updateFreeTimeLabel() {
+  const freeMin = EVENING_TOTAL_MIN - getPlannedMin();
+  const label   = document.getElementById('plan-free-label');
+  if (label) label.textContent = `⏱ ${Math.max(0, Math.round(freeMin))} min frei`;
+}
+
+function checkUnlockChoice() {
+  const mandatory     = visibleMandatory('evening');
+  const allPlaced     = mandatory.every(t => planOrder.includes(t.id));
+  const letsgoBtn     = document.getElementById('btn-letsgo');
+  if (letsgoBtn) letsgoBtn.classList.toggle('hidden', !allPlaced);
+
+  // Re-render library to unlock/lock choice cards
+  renderPlanLibrary('evening');
+}
+
+function removeFromTimeline(taskId) {
+  const idx = planOrder.indexOf(taskId);
+  if (idx !== -1) planOrder.splice(idx, 1);
+  renderPlanTimeline();
+  updateFreeTimeLabel();
+  checkUnlockChoice();
+}
+
+function insertIntoTimeline(taskId, beforeIndex) {
+  // Remove if already present (reorder)
+  const existing = planOrder.indexOf(taskId);
+  if (existing !== -1) planOrder.splice(existing, 1);
+
+  let insertAt = beforeIndex;
+  if (existing !== -1 && existing < beforeIndex) insertAt--;
+  insertAt = Math.max(0, Math.min(insertAt, planOrder.length));
+  planOrder.splice(insertAt, 0, taskId);
+
+  renderPlanTimeline();
+  updateFreeTimeLabel();
+  checkUnlockChoice();
+}
+
+function getDropIndex(tl, yClient) {
+  const blocks = [...tl.querySelectorAll('.plan-block')];
+  for (let i = 0; i < blocks.length; i++) {
+    const rect = blocks[i].getBoundingClientRect();
+    if (yClient < rect.top + rect.height / 2) return i;
+  }
+  return blocks.length;
+}
+
+// ── PLAN DRAG: Library card → Timeline ───────────────────────────
+
+function initPlanLibDrag(lib) {
+  lib.addEventListener('pointerdown', e => {
+    const card = e.target.closest('.plan-lib-card');
+    if (!card || card.classList.contains('used') || card.classList.contains('locked')) return;
+
+    const taskId = card.dataset.id;
+    e.preventDefault();
+
+    // Create ghost
+    const rect  = card.getBoundingClientRect();
+    const ghost = card.cloneNode(true);
+    ghost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;
+      width:${rect.width}px;opacity:.85;pointer-events:none;z-index:500;
+      border-radius:var(--r-md);box-shadow:0 8px 24px rgba(0,0,0,.25);
+      background:#fff;display:flex;align-items:center;gap:10px;padding:12px;`;
+    document.body.appendChild(ghost);
+    card.style.opacity = '0.3';
+
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    planDrag = { type:'from-lib', taskId, ghost, card, offsetX, offsetY, dropIndicator:null };
+
+    document.addEventListener('pointermove', onPlanMove, { passive:false });
+    document.addEventListener('pointerup',   onPlanUp);
+    document.addEventListener('pointercancel', onPlanCancel);
+  });
+}
+
+// ── PLAN DRAG: Reorder inside Timeline ───────────────────────────
+
+function initPlanTimelineDrag(tl) {
+  tl.addEventListener('pointerdown', e => {
+    const block = e.target.closest('.plan-block');
+    if (!block || e.target.classList.contains('block-remove')) return;
+
+    const taskId = block.dataset.id;
+    e.preventDefault();
+
+    const rect  = block.getBoundingClientRect();
+    const ghost = block.cloneNode(true);
+    ghost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;
+      width:${rect.width}px;height:${rect.height}px;opacity:.85;pointer-events:none;z-index:500;
+      border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);`;
+    document.body.appendChild(ghost);
+    block.classList.add('tl-dragging');
+
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    planDrag = { type:'reorder', taskId, ghost, block, offsetX, offsetY, dropIndicator:null };
+
+    document.addEventListener('pointermove', onPlanMove, { passive:false });
+    document.addEventListener('pointerup',   onPlanUp);
+    document.addEventListener('pointercancel', onPlanCancel);
+  });
+}
+
+function onPlanMove(e) {
+  if (!planDrag) return;
+  e.preventDefault();
+
+  const { ghost, offsetX, offsetY } = planDrag;
+  ghost.style.left = (e.clientX - offsetX) + 'px';
+  ghost.style.top  = (e.clientY - offsetY) + 'px';
+
+  // Remove old indicator
+  if (planDrag.dropIndicator) { planDrag.dropIndicator.remove(); planDrag.dropIndicator = null; }
+
+  const tl = document.getElementById('plan-timeline');
+  const tlRect = tl.getBoundingClientRect();
+
+  if (e.clientX >= tlRect.left && e.clientX <= tlRect.right &&
+      e.clientY >= tlRect.top  && e.clientY <= tlRect.bottom) {
+    const idx = getDropIndex(tl, e.clientY);
+    const blocks = [...tl.querySelectorAll('.plan-block')];
+    const indicator = document.createElement('div');
+    indicator.className = 'plan-drop-indicator';
+    planDrag.dropIndicator = indicator;
+    if (idx < blocks.length) {
+      tl.insertBefore(indicator, blocks[idx]);
+    } else {
+      const freeBlock = tl.querySelector('.plan-free-block');
+      if (freeBlock) tl.insertBefore(indicator, freeBlock);
+      else tl.appendChild(indicator);
+    }
+  }
+}
+
+function onPlanUp(e) {
+  if (!planDrag) return;
+
+  const tl     = document.getElementById('plan-timeline');
+  const tlRect = tl.getBoundingClientRect();
+  const { taskId, type, ghost, card, block } = planDrag;
+
+  // Cleanup ghost + indicator
+  ghost.remove();
+  if (planDrag.dropIndicator) planDrag.dropIndicator.remove();
+  if (type === 'from-lib' && card) card.style.opacity = '';
+  if (type === 'reorder'  && block) block.classList.remove('tl-dragging');
+
+  const overTimeline = e.clientX >= tlRect.left && e.clientX <= tlRect.right &&
+                       e.clientY >= tlRect.top  && e.clientY <= tlRect.bottom;
+
+  // Re-read blocks BEFORE insert (indicator was removed)
+  if (overTimeline) {
+    const dropIdx = getDropIndex(tl, e.clientY);
+    insertIntoTimeline(taskId, dropIdx);
+  } else if (type === 'reorder') {
+    // Dropped outside — remove from timeline
+    removeFromTimeline(taskId);
+  } else {
+    // Cancelled lib drag — just re-render library to restore opacity
+    renderPlanLibrary('evening');
+  }
+
+  cleanupPlanDrag();
+}
+
+function onPlanCancel() {
+  if (!planDrag) return;
+  const { ghost, card, block, dropIndicator } = planDrag;
+  ghost.remove();
+  if (dropIndicator) dropIndicator.remove();
+  if (card)  card.style.opacity = '';
+  if (block) block.classList.remove('tl-dragging');
+  renderPlanLibrary('evening');
+  renderPlanTimeline();
+  cleanupPlanDrag();
+}
+
+function cleanupPlanDrag() {
+  planDrag = null;
+  document.removeEventListener('pointermove', onPlanMove);
+  document.removeEventListener('pointerup',   onPlanUp);
+  document.removeEventListener('pointercancel', onPlanCancel);
+}
+
+function finishPlanning() {
+  try { screen.orientation.unlock(); } catch (e) {}
+  state.evening.order    = [...planOrder];
+  state.evening.planDone = true;
+  save();
+  showRoutine('evening');
 }
 
 // ── DRAG & DROP ──────────────────────────────────────────────────

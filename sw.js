@@ -1,4 +1,4 @@
-const CACHE = 'routinen-v2';
+const CACHE = 'routinen-v3';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
