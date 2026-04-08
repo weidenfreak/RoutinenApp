@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F9B84B">
+<link rel="manifest" href="manifest.json">
+<title>Routinen</title>
+<style>
+:root {
+  --cream:    #FFF8F0;
+  --green:    #A8D5B5;
+  --green-dk: #1E5E34;
+  --teal:     #9DD4CF;
+  --teal-dk:  #2E7A74;
+  --amber:    #F9D98A;
+  --peach:    #FECAA0;
+  --text:     #2D2D2D;
+  --muted:    #888;
+  --r-lg: 24px;
+  --r-md: 16px;
+  --r-sm: 12px;
+  --sh:   0 4px 16px rgba(0,0,0,.10);
+  --sh-s: 0 2px 8px  rgba(0,0,0,.07);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+
+html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif; background:var(--cream); color:var(--text); }
+
+/* ══ SCREENS ══ */
+.screen { display:none; flex-direction:column; min-height:100dvh; min-height:100vh; }
+.screen.active { display:flex; animation:fadeIn .25s ease; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* ══ HOME ══ */
+#screen-home {
+  align-items:stretch;
+  justify-content:center;
+  padding: 40px 24px 80px;
+  gap: 20px;
+  background: linear-gradient(160deg, #FFF8F0 0%, #FFF0D4 100%);
+}
+
+.app-title {
+  text-align:center;
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
+  font-weight:800;
+  margin-bottom:8px;
+}
+
+.mode-card {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px; padding:40px 20px;
+  border-radius:var(--r-lg); border:none; cursor:pointer;
+  box-shadow:var(--sh); color:white; position:relative; overflow:hidden;
+  transition:transform .15s ease;
+}
+.mode-card::after {
+  content:''; position:absolute; inset:0;
+  background:rgba(255,255,255,0); transition:background .15s;
+}
+.mode-card:active { transform:scale(.97); }
+.mode-card:active::after { background:rgba(255,255,255,.15); }
+.mode-card.morning { background:linear-gradient(135deg,#F9B84B 0%,#F07A30 100%); }
+.mode-card.evening { background:linear-gradient(135deg,#7B9FD4 0%,#4A6FA5 100%); }
+.mode-emoji { font-size: clamp(3.5rem,11vw,5.5rem); line-height:1; }
+.mode-label { font-size: clamp(1.4rem,4.5vw,2.1rem); font-weight:700; }
+
+/* ══ SETTINGS BUTTON (fixed) ══ */
+#settings-btn {
+  position:fixed; bottom:18px; right:18px;
+  width:44px; height:44px; border-radius:50%; border:none;
+  background:rgba(0,0,0,.06); font-size:1.3rem; cursor:pointer;
+  opacity:.3; display:flex; align-items:center; justify-content:center;
+  z-index:50; transition:opacity .2s;
+}
+#settings-btn:hover { opacity:.55; }
+
+/* ══ ROUTINE SCREEN ══ */
+.routine-header {
+  position:sticky; top:0;
+  display:flex; align-items:center; gap:12px;
+  padding:12px 16px;
+  background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.06);
+  z-index:20;
+}
+
+.back-btn {
+  width:52px; height:52px; border-radius:var(--r-sm); border:none;
+  background:#F4F4F4; font-size:1.9rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; transition:background .15s;
+}
+.back-btn:active { background:#E0E0E0; }
+
+.choice-badge {
+  flex:1; padding:10px 14px; border-radius:var(--r-md);
+  text-align:center; transition:background .4s;
+}
+.choice-badge.plenty { background:#C8EDD8; }
+.choice-badge.medium { background:var(--amber); }
+.choice-badge.tight  { background:var(--peach); }
+
+.choice-badge-text {
+  font-size: clamp(.9rem,2.8vw,1.2rem);
+  font-weight:700; color:#1E4D2E;
+}
+
+.routine-body {
+  padding:16px;
+  display:flex; flex-direction:column; gap:16px;
+  flex:1;
+}
+
+/* ══ ACTIVE TASK CARD ══ */
+.active-card {
+  background:#fff; border-radius:var(--r-lg);
+  padding:20px; box-shadow:var(--sh);
+  border:3px solid var(--teal);
+  display:flex; gap:16px; align-items:flex-start;
+  transition:background .2s, border-color .2s;
+}
+.active-emoji { font-size:3.2rem; flex-shrink:0; line-height:1; margin-top:2px; }
+.active-info  { flex:1; min-width:0; }
+.active-label { font-size:1.35rem; font-weight:700; margin-bottom:10px; }
+
+.timer-track { height:14px; background:#EEE; border-radius:7px; overflow:hidden; margin-bottom:12px; }
+.timer-bar   { height:100%; width:0%; background:linear-gradient(90deg,var(--teal),#5BB8B0); border-radius:7px; }
+
+.active-btns { display:flex; gap:10px; flex-wrap:wrap; }
+
+.btn-timer {
+  padding:10px 16px; border-radius:var(--r-sm);
+  border:2px solid var(--teal); background:#fff;
+  color:var(--teal-dk); font-size:.95rem; font-weight:700;
+  cursor:pointer; white-space:nowrap; transition:all .15s;
+}
+.btn-timer:active { background:#E8F8F5; }
+.btn-timer.running { border-color:#DDD; background:#F8F8F8; color:#AAA; cursor:default; }
+
+.btn-done {
+  flex:1; min-width:110px; padding:12px 18px;
+  border-radius:var(--r-sm); border:none;
+  background:var(--green); color:var(--green-dk);
+  font-size:1.05rem; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:all .15s;
+}
+.btn-done:active { transform:scale(.95); background:#8CC4A0; }
+
+/* ══ TASK GRID ══ */
+.tasks-section { display:flex; flex-direction:column; gap:10px; }
+.section-label {
+  font-size:.82rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+}
+
+.tasks-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:10px;
+}
+
+.task-tile {
+  background:#fff; border-radius:var(--r-md);
+  padding:18px 10px 14px;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  cursor:pointer; box-shadow:var(--sh-s);
+  border:3px solid transparent;
+  transition:transform .15s, border-color .15s, opacity .2s;
+  min-height:110px;
+}
+.task-tile:not(.done):not(.locked):active { transform:scale(.96); }
+.task-tile.last { border-color:#C8EDD8; background:linear-gradient(135deg,#F0FBF5,#E0F5EA); }
+.task-tile.done { opacity:.45; background:#F5F5F5; cursor:default; border-color:transparent; }
+.task-tile.locked { opacity:.35; cursor:not-allowed; }
+
+.tile-emoji { font-size: clamp(2rem,7vw,2.8rem); line-height:1; }
+.tile-label { font-size: clamp(.78rem,2.4vw,.95rem); font-weight:600; text-align:center; line-height:1.25; }
+.tile-dur   { font-size:.72rem; color:var(--muted); }
+.tile-tag   { font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:20px; }
+.task-tile.last:not(.locked) .tile-tag  { background:#C8EDD8; color:#1A5E32; }
+.task-tile.locked .tile-tag             { background:#EEE; color:#AAA; }
+.tile-check { font-size:1.4rem; margin-top:2px; }
+
+/* ══ CHOICE SECTION ══ */
+.choice-section { display:flex; flex-direction:column; gap:10px; }
+.choice-chips   { display:flex; flex-wrap:wrap; gap:8px; }
+
+.choice-chip {
+  display:flex; align-items:center; gap:6px;
+  padding:10px 16px; border-radius:50px;
+  border:3px solid #E0E0E0; background:#fff;
+  cursor:pointer; font-size:.95rem; font-weight:600; color:#555;
+  box-shadow:var(--sh-s); transition:all .15s;
+}
+.choice-chip:active { transform:scale(.96); }
+.choice-chip.selected { border-color:var(--teal); background:#EEF8F7; color:var(--teal-dk); }
+.chip-emoji { font-size:1.4rem; line-height:1; }
+.chip-dur   { font-size:.78rem; font-weight:400; color:#AAA; }
+.choice-chip.selected .chip-dur { color:#5BB8B0; }
+
+/* ══ COMPLETION OVERLAY ══ */
+#overlay-completion {
+  position:fixed; inset:0;
+  background:rgba(255,248,240,.97);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  z-index:100; cursor:pointer; padding:20px;
+  animation:fadeIn .5s ease;
+}
+#overlay-completion.hidden { display:none; }
+
+.completion-inner {
+  display:flex; flex-direction:column;
+  align-items:center; gap:16px; position:relative;
+}
+.completion-title { font-size:clamp(2rem,7vw,3.2rem); font-weight:800; text-align:center; }
+.completion-hint  { font-size:1rem; color:#CCC; margin-top:8px; }
+
+.fox-wrap { width:min(220px,55vw); animation:foxBounce 1.1s ease-in-out infinite; }
+@keyframes foxBounce {
+  0%,100% { transform:translateY(0); }
+  50%      { transform:translateY(-22px); }
+}
+
+.stars-wrap { position:absolute; inset:-80px; pointer-events:none; }
+.star {
+  position:absolute; font-size:clamp(1.3rem,4vw,2rem);
+  animation:starPop var(--d) var(--dl) ease-in-out infinite;
+}
+@keyframes starPop {
+  0%,100% { transform:translateY(0) scale(1); opacity:.6; }
+  50%      { transform:translateY(-28px) scale(1.25); opacity:1; }
+}
+
+/* ══ SETTINGS MODAL ══ */
+#modal-settings {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.45);
+  display:flex; align-items:center; justify-content:center;
+  z-index:200; padding:24px;
+}
+#modal-settings.hidden { display:none; }
+
+.modal-box {
+  background:#fff; border-radius:28px; padding:32px 28px 24px;
+  width:100%; max-width:360px;
+  box-shadow:0 24px 64px rgba(0,0,0,.18);
+}
+.modal-title { font-size:1.4rem; font-weight:800; margin-bottom:24px; }
+
+.setting-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 0; border-bottom:1px solid #F0F0F0;
+}
+.setting-label { font-size:1.05rem; font-weight:500; }
+
+.toggle {
+  padding:10px 18px; border-radius:var(--r-sm); border:none;
+  font-size:.95rem; font-weight:700; cursor:pointer; transition:all .15s;
+}
+.toggle.on  { background:var(--green); color:var(--green-dk); }
+.toggle.off { background:#EEE; color:#888; }
+
+.weather-info { font-size:.8rem; color:#AAA; padding:8px 2px 2px; min-height:22px; }
+
+.modal-close {
+  margin-top:20px; width:100%; padding:16px;
+  border-radius:var(--r-md); border:none;
+  background:#F0F0F0; font-size:1.05rem; font-weight:700; color:#555;
+  cursor:pointer; transition:background .15s;
+}
+.modal-close:active { background:#E0E0E0; }
+
+/* ══ FLASH ANIM ══ */
+@keyframes doneFlash {
+  0%   { background:#fff; border-color:var(--teal); }
+  40%  { background:#D4F7DE; border-color:#5BB880; }
+  100% { background:#D4F7DE; border-color:#5BB880; }
+}
+.active-card.done-flash { animation:doneFlash .35s ease forwards; }
+</style>
+</head>
+<body>
+
+<!-- ══ HOME SCREEN ══ -->
+<div id="screen-home" class="screen active">
+  <div class="app-title">Was machen wir heute? 🌟</div>
+  <div class="mode-card morning" onclick="showRoutine('morning')">
+    <div class="mode-emoji">🌅</div>
+    <div class="mode-label">Morgenroutine</div>
+  </div>
+  <div class="mode-card evening" onclick="showRoutine('evening')">
+    <div class="mode-emoji">🌙</div>
+    <div class="mode-label">Abendroutine</div>
+  </div>
+</div>
+
+<!-- ══ ROUTINE SCREEN ══ -->
+<div id="screen-routine" class="screen">
+  <div class="routine-header">
+    <button class="back-btn" onclick="showHome()">‹</button>
+    <div id="choice-badge" class="choice-badge plenty">
+      <span id="choice-badge-text" class="choice-badge-text">…</span>
+    </div>
+  </div>
+  <div class="routine-body" id="routine-body"></div>
+</div>
+
+<!-- ══ COMPLETION OVERLAY ══ -->
+<div id="overlay-completion" class="hidden" onclick="hideCompletion()">
+  <div class="completion-inner">
+    <div class="completion-title">Super gemacht!&nbsp;🎉</div>
+    <div class="stars-wrap" id="stars-wrap"></div>
+    <div class="fox-wrap" id="fox-wrap"></div>
+    <div class="completion-hint">Antippen zum Weitermachen ✨</div>
+  </div>
+</div>
+
+<!-- ══ SETTINGS MODAL ══ -->
+<div id="modal-settings" class="hidden" onclick="closeSettings()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title">⚙️ Eltern-Einstellungen</div>
+    <div class="setting-row">
+      <span class="setting-label">☀️ Sonnencreme</span>
+      <button id="btn-sunscreen" class="toggle on" onclick="toggleSunscreen()">Ein ☀️</button>
+    </div>
+    <div id="weather-info" class="weather-info"></div>
+    <button class="modal-close" onclick="closeSettings()">Fertig</button>
+  </div>
+</div>
+
+<!-- ══ SETTINGS TRIGGER ══ -->
+<button id="settings-btn" title="Lang drücken für Einstellungen">⚙️</button>
+
+<script>
+'use strict';
+
+// ── TASK DEFINITIONS ─────────────────────────────────────────────
+
+const TASKS = {
+  morning: {
+    deadline: { h:9, m:15 },
+    mandatory: [
+      { id:'pipi',      emoji:'🚽', label:'Pipi + Hände waschen', duration:5 },
+      { id:'teeth',     emoji:'🦷', label:'Zähne putzen',          duration:5 },
+      { id:'face',      emoji:'🧼', label:'Gesicht waschen',        duration:2 },
+      { id:'dress',     emoji:'👕', label:'Anziehen',               duration:5 },
+      { id:'sunscreen', emoji:'☀️', label:'Sonnencreme',            duration:5, conditional:true },
+      { id:'go',        emoji:'🥾', label:'Jacke + Schuhe + Los!', duration:10, isLast:true },
+    ],
+    choice: [
+      { id:'play', emoji:'🎲', label:'Spielen',    duration:null },
+      { id:'book', emoji:'📚', label:'Buch lesen', duration:null },
+    ],
+  },
+  evening: {
+    deadline: { h:21, m:0 },
+    mandatory: [
+      { id:'feet',   emoji:'🦶', label:'Füße waschen',         duration:5 },
+      { id:'warts',  emoji:'🩹', label:'Warzenversorgung',      duration:5 },
+      { id:'teeth',  emoji:'🦷', label:'Zähne putzen',          duration:5 },
+      { id:'face',   emoji:'🧼', label:'Gesicht waschen',        duration:2 },
+      { id:'pipi',   emoji:'🚽', label:'Pipi + Hände waschen',  duration:5 },
+      { id:'pyjama', emoji:'🌙', label:'Schlafanzug anziehen',  duration:5 },
+    ],
+    choice: [
+      { id:'episode',  emoji:'📺', label:'Folge schauen', duration:25 },
+      { id:'readbook', emoji:'📖', label:'Vorlesen',       duration:15 },
+      { id:'play',     emoji:'🎲', label:'Spielen',        duration:15 },
+    ],
+  },
+};
+
+// ── STATE ────────────────────────────────────────────────────────
+
+function newRoutine() {
+  return { date:null, completed:[], selectedChoice:[], active:null, timerStart:null, timerDuration:null };
+}
+
+function defaults() {
+  return { sunscreenEnabled:true, weatherCheck:null, morning:newRoutine(), evening:newRoutine() };
+}
+
+let state = (function () {
+  try {
+    const raw = localStorage.getItem('routinenapp');
+    if (!raw) return defaults();
+    const s = JSON.parse(raw);
+    return {
+      ...defaults(), ...s,
+      morning: { ...newRoutine(), ...s.morning },
+      evening: { ...newRoutine(), ...s.evening },
+    };
+  } catch { return defaults(); }
+})();
+
+function save() { localStorage.setItem('routinenapp', JSON.stringify(state)); }
+
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function resetDaily() {
+  const t = today();
+  ['morning','evening'].forEach(m => {
+    if (state[m].date !== t) state[m] = { ...newRoutine(), date:t };
+  });
+  save();
+}
+
+// ── TASK HELPERS ─────────────────────────────────────────────────
+
+function visibleMandatory(mode) {
+  return TASKS[mode].mandatory.filter(t => !t.conditional || state.sunscreenEnabled);
+}
+
+function remainingMin(mode) {
+  const done = state[mode].completed;
+  return visibleMandatory(mode).filter(t => !done.includes(t.id)).reduce((s,t) => s + t.duration, 0);
+}
+
+function availableChoiceMin(mode) {
+  const now = new Date();
+  const dl  = TASKS[mode].deadline;
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), dl.h, dl.m);
+  return Math.max(0, Math.floor((end - now) / 60000 - remainingMin(mode)));
+}
+
+function allNonLastDone(mode) {
+  return visibleMandatory(mode).filter(t => !t.isLast).every(t => state[mode].completed.includes(t.id));
+}
+
+function allDone(mode) {
+  return visibleMandatory(mode).every(t => state[mode].completed.includes(t.id));
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────────
+
+let currentMode  = null;
+let timerIv      = null;
+let badgeIv      = null;
+
+function switchScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showHome() {
+  clearAll();
+  currentMode = null;
+  switchScreen('screen-home');
+}
+
+function showRoutine(mode) {
+  currentMode = mode;
+  resetDaily();
+  renderRoutine();
+  switchScreen('screen-routine');
+  updateBadge();
+  badgeIv = setInterval(updateBadge, 30000);
+  if (state[mode].timerStart) resumeTimer();
+  checkWeather();
+}
+
+// ── RENDER ───────────────────────────────────────────────────────
+
+function renderRoutine() {
+  const mode = currentMode;
+  const ms   = state[mode];
+  const mand = visibleMandatory(mode);
+  const ch   = TASKS[mode].choice;
+  let html   = '';
+
+  // Active task area
+  if (ms.active && !ms.completed.includes(ms.active)) {
+    const t = mand.find(x => x.id === ms.active);
+    if (t) {
+      const running = !!ms.timerStart;
+      html += `<div class="active-card" id="active-card">
+  <div class="active-emoji">${t.emoji}</div>
+  <div class="active-info">
+    <div class="active-label">${t.label}</div>
+    <div class="timer-track"><div class="timer-bar" id="timer-bar"></div></div>
+    <div class="active-btns">
+      <button class="btn-timer${running?' running':''}" id="btn-timer"
+        onclick="onStartTimer('${mode}','${t.id}',${t.duration})"${running?' disabled':''}>
+        ${running ? '⏱ läuft…' : '▶ Timer starten'}
+      </button>
+      <button class="btn-done" onclick="finishTask('${mode}','${t.id}')">
+        ✅ Geschafft!
+      </button>
+    </div>
+  </div>
+</div>`;
+    }
+  }
+
+  // Task grid
+  html += `<div class="tasks-section">
+  <div class="section-label">Pflichtaufgaben</div>
+  <div class="tasks-grid">`;
+
+  const nonLast = mand.filter(t => !t.isLast);
+  const lastTask = mand.find(t => t.isLast);
+
+  for (const t of nonLast) {
+    if (t.id === ms.active && !ms.completed.includes(t.id)) continue;
+    html += renderTile(t, ms, false);
+  }
+
+  if (lastTask && !(lastTask.id === ms.active && !ms.completed.includes(lastTask.id))) {
+    const locked = !ms.completed.includes(lastTask.id) && !allNonLastDone(mode);
+    html += renderTile(lastTask, ms, locked);
+  }
+
+  html += `</div></div>`;
+
+  // Choice section
+  html += `<div class="choice-section">
+  <div class="section-label">Ich möchte noch</div>
+  <div class="choice-chips">`;
+
+  for (const c of ch) {
+    const sel = ms.selectedChoice.includes(c.id);
+    html += `<button class="choice-chip${sel?' selected':''}" onclick="toggleChoice('${mode}','${c.id}')">
+  <span class="chip-emoji">${c.emoji}</span>
+  <span>${c.label}</span>
+  ${c.duration ? `<span class="chip-dur">${c.duration}&nbsp;min</span>` : ''}
+</button>`;
+  }
+
+  html += `</div></div>`;
+
+  document.getElementById('routine-body').innerHTML = html;
+
+  // Restore timer bar position if needed
+  if (ms.active && ms.timerStart) setTimeout(updateBar, 50);
+}
+
+function renderTile(t, ms, locked) {
+  if (ms.completed.includes(t.id)) {
+    return `<div class="task-tile done">
+  <div class="tile-emoji">${t.emoji}</div>
+  <div class="tile-label">${t.label}</div>
+  <div class="tile-check">✅</div>
+</div>`;
+  }
+
+  const isLast = !!t.isLast;
+  let cls = 'task-tile';
+  let tag = '';
+  let onclick = '';
+
+  if (locked) {
+    cls += ' last locked';
+    tag  = `<span class="tile-tag">Erst die anderen</span>`;
+  } else if (isLast) {
+    cls += ' last';
+    tag  = `<span class="tile-tag">Letzter Schritt</span>`;
+    onclick = `onclick="activateTask('${t.id}')"`;
+  } else {
+    onclick = `onclick="activateTask('${t.id}')"`;
+  }
+
+  return `<div class="${cls}" ${onclick}>
+  <div class="tile-emoji">${t.emoji}</div>
+  <div class="tile-label">${t.label}</div>
+  <div class="tile-dur">${t.duration}&nbsp;min</div>
+  ${tag}
+</div>`;
+}
+
+// ── BADGE ────────────────────────────────────────────────────────
+
+function updateBadge() {
+  if (!currentMode) return;
+  const avail = availableChoiceMin(currentMode);
+  const badge = document.getElementById('choice-badge');
+  const text  = document.getElementById('choice-badge-text');
+  if (!badge || !text) return;
+
+  badge.className = 'choice-badge';
+
+  if (allDone(currentMode)) {
+    text.textContent = 'Alles geschafft! 🌟';
+    badge.classList.add('plenty');
+  } else if (avail <= 0) {
+    text.textContent = 'Schnell schnell! 🏃';
+    badge.classList.add('tight');
+  } else if (avail <= 15) {
+    text.textContent = `Noch ${avail} Min Wahlzeit ⚡`;
+    badge.classList.add('medium');
+  } else {
+    text.textContent = `Noch ${avail} Min Wahlzeit 🎉`;
+    badge.classList.add('plenty');
+  }
+}
+
+// ── TASK ACTIONS ─────────────────────────────────────────────────
+
+function activateTask(id) {
+  const mode = currentMode;
+  if (state[mode].active === id) return;
+  clearInterval(timerIv); timerIv = null;
+  state[mode].active       = id;
+  state[mode].timerStart   = null;
+  state[mode].timerDuration = null;
+  save();
+  renderRoutine();
+  updateBadge();
+}
+
+function onStartTimer(mode, id, durationMin) {
+  if (state[mode].timerStart) return;
+  state[mode].timerStart    = Date.now();
+  state[mode].timerDuration = durationMin * 60;
+  save();
+  const btn = document.getElementById('btn-timer');
+  if (btn) { btn.textContent = '⏱ läuft…'; btn.disabled = true; btn.classList.add('running'); }
+  startTimerIv();
+}
+
+function startTimerIv() {
+  clearInterval(timerIv);
+  timerIv = setInterval(updateBar, 500);
+}
+
+function resumeTimer() {
+  const ms = state[currentMode];
+  if (!ms.timerStart || !ms.timerDuration) return;
+  const elapsed = (Date.now() - ms.timerStart) / 1000;
+  if (elapsed >= ms.timerDuration) return; // finished while away — bar stays at 100% after next render
+  startTimerIv();
+}
+
+function updateBar() {
+  if (!currentMode) return;
+  const ms = state[currentMode];
+  if (!ms.timerStart || !ms.timerDuration) return;
+  const pct = Math.min(((Date.now() - ms.timerStart) / 1000 / ms.timerDuration) * 100, 100);
+  const bar = document.getElementById('timer-bar');
+  if (bar) bar.style.width = pct + '%';
+  if (pct >= 100) { clearInterval(timerIv); timerIv = null; }
+}
+
+function finishTask(mode, id) {
+  clearInterval(timerIv); timerIv = null;
+
+  // Brief visual flash before re-render
+  const card = document.getElementById('active-card');
+  if (card) card.classList.add('done-flash');
+
+  state[mode].completed.push(id);
+  state[mode].active        = null;
+  state[mode].timerStart    = null;
+  state[mode].timerDuration = null;
+  save();
+
+  setTimeout(() => {
+    if (allDone(mode)) { showCompletion(); return; }
+    renderRoutine();
+    updateBadge();
+  }, 350);
+}
+
+function toggleChoice(mode, id) {
+  const sel = state[mode].selectedChoice;
+  const i   = sel.indexOf(id);
+  if (i >= 0) sel.splice(i, 1); else sel.push(id);
+  save();
+  renderRoutine();
+  updateBadge();
+}
+
+// ── COMPLETION ───────────────────────────────────────────────────
+
+const FOX_SVG = `<svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+  <ellipse cx="55" cy="178" rx="38" ry="22" transform="rotate(-35 55 178)" fill="#F4873A"/>
+  <ellipse cx="47" cy="186" rx="18" ry="11" transform="rotate(-35 47 186)" fill="#FFF0DC"/>
+  <ellipse cx="112" cy="168" rx="42" ry="38" fill="#F4873A"/>
+  <circle cx="128" cy="102" r="44" fill="#F4873A"/>
+  <polygon points="96,74 88,28 122,67" fill="#F4873A"/>
+  <polygon points="100,70 95,40 119,66" fill="#C85520"/>
+  <polygon points="160,68 168,24 135,65" fill="#F4873A"/>
+  <polygon points="157,66 162,38 137,64" fill="#C85520"/>
+  <ellipse cx="128" cy="114" rx="27" ry="22" fill="#FFF0DC"/>
+  <circle cx="114" cy="97" r="7.5" fill="white"/>
+  <circle cx="142" cy="97" r="7.5" fill="white"/>
+  <circle cx="116" cy="98" r="4.5" fill="#2A1608"/>
+  <circle cx="144" cy="98" r="4.5" fill="#2A1608"/>
+  <circle cx="118" cy="96" r="1.8" fill="white"/>
+  <circle cx="146" cy="96" r="1.8" fill="white"/>
+  <ellipse cx="128" cy="116" rx="5.5" ry="4.5" fill="#2A1608"/>
+  <path d="M 121 122 Q 128 130 135 122" stroke="#2A1608" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="108" cy="116" r="9" fill="#F99570" opacity="0.4"/>
+  <circle cx="148" cy="116" r="9" fill="#F99570" opacity="0.4"/>
+</svg>`;
+
+const STAR_DATA = [
+  {t:'7%',  l:'12%', d:'2.1s', dl:'0s'   },
+  {t:'11%', l:'78%', d:'1.8s', dl:'0.3s' },
+  {t:'24%', l:'4%',  d:'2.3s', dl:'0.6s' },
+  {t:'17%', l:'88%', d:'1.9s', dl:'0.1s' },
+  {t:'78%', l:'10%', d:'2.2s', dl:'0.4s' },
+  {t:'72%', l:'82%', d:'2.0s', dl:'0.7s' },
+  {t:'48%', l:'2%',  d:'1.7s', dl:'0.2s' },
+  {t:'52%', l:'90%', d:'2.4s', dl:'0.5s' },
+];
+
+function showCompletion() {
+  clearAll();
+  document.getElementById('fox-wrap').innerHTML = FOX_SVG;
+  document.getElementById('stars-wrap').innerHTML = STAR_DATA.map((s,i) =>
+    `<div class="star" style="top:${s.t};left:${s.l};--d:${s.d};--dl:${s.dl}">${
+      ['⭐','✨','🌟','💫'][i%4]
+    }</div>`
+  ).join('');
+  document.getElementById('overlay-completion').classList.remove('hidden');
+}
+
+function hideCompletion() {
+  document.getElementById('overlay-completion').classList.add('hidden');
+  showHome();
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────
+
+function openSettings() {
+  const btn = document.getElementById('btn-sunscreen');
+  btn.textContent = state.sunscreenEnabled ? 'Ein ☀️' : 'Aus';
+  btn.className   = `toggle ${state.sunscreenEnabled ? 'on' : 'off'}`;
+
+  const wc = state.weatherCheck;
+  const wi = document.getElementById('weather-info');
+  if (wc) {
+    const t = new Date(wc.ts).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+    wi.textContent = `Wetter-Check: ${t} · UV&nbsp;${wc.uv ?? '?'} · Sonne&nbsp;${Math.round((wc.sun||0)/3600)}h · ${wc.auto ? 'automatisch' : 'manuell'}`;
+  } else {
+    wi.textContent = 'Noch kein Wetter-Check heute';
+  }
+
+  document.getElementById('modal-settings').classList.remove('hidden');
+}
+
+function closeSettings() {
+  document.getElementById('modal-settings').classList.add('hidden');
+}
+
+function toggleSunscreen() {
+  state.sunscreenEnabled = !state.sunscreenEnabled;
+  if (state.weatherCheck) state.weatherCheck.auto = false;
+  save();
+  const btn = document.getElementById('btn-sunscreen');
+  btn.textContent = state.sunscreenEnabled ? 'Ein ☀️' : 'Aus';
+  btn.className   = `toggle ${state.sunscreenEnabled ? 'on' : 'off'}`;
+  if (currentMode) { renderRoutine(); updateBadge(); }
+}
+
+// Long-press on the gear icon (2.5 s)
+;(function () {
+  const btn = document.getElementById('settings-btn');
+  let timer = null;
+  const start  = () => { timer = setTimeout(() => { timer = null; openSettings(); }, 2500); };
+  const cancel = () => { clearTimeout(timer); timer = null; };
+  btn.addEventListener('pointerdown', start);
+  ['pointerup','pointercancel','pointerleave'].forEach(e => btn.addEventListener(e, cancel));
+})();
+
+// ── WEATHER ──────────────────────────────────────────────────────
+
+async function checkWeather() {
+  if (new Date().getHours() < 6) return;
+  if (state.weatherCheck?.date === today()) return;
+  try {
+    const url = 'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=54.133&longitude=10.624' +
+      '&daily=uv_index_max,sunshine_duration' +
+      '&timezone=Europe%2FBerlin&forecast_days=1';
+    const r = await fetch(url, { cache:'no-cache' });
+    if (!r.ok) return;
+    const d   = await r.json();
+    const uv  = d.daily.uv_index_max?.[0]      ?? 0;
+    const sun = d.daily.sunshine_duration?.[0] ?? 0; // seconds
+    state.sunscreenEnabled = uv >= 3 || sun > 14400;
+    state.weatherCheck = { date:today(), uv, sun, auto:true, ts:Date.now() };
+    save();
+    if (currentMode) { renderRoutine(); updateBadge(); }
+  } catch { /* offline — keep current setting */ }
+}
+
+// ── UTILS ────────────────────────────────────────────────────────
+
+function clearAll() {
+  clearInterval(timerIv);
+  clearInterval(badgeIv);
+  timerIv = null;
+  badgeIv = null;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+
+resetDaily();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
