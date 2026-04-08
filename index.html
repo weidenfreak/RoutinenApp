@@ -333,9 +333,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
       <div class="plan-tl-title">19:25 – 21:00</div>
       <div class="plan-free-label" id="plan-free-label">⏱ … min frei</div>
     </div>
-    <div class="plan-timeline" id="plan-timeline">
-      <div class="plan-timeline-empty" id="plan-timeline-empty">← Aufgaben hierher ziehen</div>
-    </div>
+    <div class="plan-timeline" id="plan-timeline"></div>
     <button class="btn-letsgo hidden" id="btn-letsgo" onclick="finishPlanning()">Los geht's! 🚀</button>
   </div>
   <div class="landscape-hint">📱↔️<br>Bitte Tablet quer halten</div>
@@ -667,6 +665,7 @@ function getPlannedMin() {
 function showPlan(mode) {
   planOrder = [];
   renderPlanLibrary(mode);
+  initPlanLibDrag(document.getElementById('plan-library'));
   renderPlanTimeline(mode);
   updateFreeTimeLabel();
   switchScreen('screen-plan');
@@ -705,22 +704,17 @@ function renderPlanLibrary(mode) {
   });
 
   lib.innerHTML = html;
-  initPlanLibDrag(lib);
 }
 
 function renderPlanTimeline() {
   const tl      = document.getElementById('plan-timeline');
-  const empty   = document.getElementById('plan-timeline-empty');
   const all     = getAllTasks('evening');
   const freeMin = EVENING_TOTAL_MIN - getPlannedMin();
 
   if (!planOrder.length) {
-    tl.innerHTML = '';
-    tl.appendChild(empty);
-    empty.style.display = '';
+    tl.innerHTML = '<div class="plan-timeline-empty" id="plan-timeline-empty">← Aufgaben hierher ziehen</div>';
     return;
   }
-  empty.style.display = 'none';
 
   let html = '';
   planOrder.forEach(id => {
