@@ -105,16 +105,16 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 .budget-labels { display:flex; justify-content:space-between; font-size:.85rem; font-weight:700; color:var(--muted); margin-top:5px; }
 
 /* ══ CHOICE SECTION ══ */
-.choice-section { background:#fff; border-radius:var(--r-md); box-shadow:var(--sh-s); padding:16px; }
-.choice-section-label { font-size:.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px; }
+.choice-section { background:linear-gradient(135deg,#B5A8D5,#9A8BC4); border-radius:var(--r-md); box-shadow:var(--sh-s); padding:16px; }
+.choice-section-label { font-size:.72rem; font-weight:700; color:rgba(255,255,255,.8); text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px; }
 .choice-chips { display:flex; flex-wrap:wrap; gap:8px; }
-.choice-chip { padding:14px 18px; border-radius:var(--r-sm); border:2px solid #EEE; background:#F8F8F8; font-size:1rem; font-weight:600; cursor:pointer; transition:all .15s; color:var(--text); }
-.choice-chip.active { background:#EEE8FF; border-color:#9A8BC4; color:#4A3A8A; }
+.choice-chip { padding:14px 18px; border-radius:var(--r-sm); border:2px solid rgba(255,255,255,.35); background:rgba(255,255,255,.2); font-size:1rem; font-weight:700; cursor:pointer; transition:all .15s; color:#fff; }
+.choice-chip.active { background:rgba(255,255,255,.45); border-color:#fff; }
 .choice-chip:active { transform:scale(.95); }
 .choice-swap-row { display:flex; gap:8px; padding:6px 58px 4px; flex-wrap:wrap; }
-.choice-swap-btn { padding:8px 16px; border-radius:20px; border:1.5px solid #DDD; background:#F8F8F8; font-size:.9rem; cursor:pointer; color:var(--muted); font-weight:600; }
-.choice-swap-btn:active { background:#EEE; }
-.task-tag.choice-tag { background:#EEE8FF; color:#6A4A9A; }
+.choice-swap-btn { padding:8px 16px; border-radius:20px; border:1.5px solid rgba(255,255,255,.4); background:rgba(255,255,255,.2); font-size:.9rem; cursor:pointer; color:#fff; font-weight:600; }
+.choice-swap-btn:active { background:rgba(255,255,255,.35); }
+.task-tag.choice-tag { background:rgba(255,255,255,.3); color:#fff; }
 
 /* ══ ROUTINE BODY ══ */
 .routine-body { padding:16px; display:flex; flex-direction:column; gap:10px; flex:1; }
@@ -124,14 +124,24 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 
 .task-row {
   display:flex; align-items:center;
-  background:#fff; border-radius:var(--r-md);
+  background:linear-gradient(135deg,#9DD4CF,#7BBFBA);
+  border-radius:var(--r-md);
   box-shadow:var(--sh-s); min-height:80px;
   border:3px solid transparent;
   transition:opacity .2s, transform .15s, box-shadow .15s;
   overflow:hidden;
 }
-.task-row.done { opacity:.4; }
-.task-row.last-step { border-color:#C8EDD8; }
+.task-row.done {
+  opacity:.45;
+  background:linear-gradient(135deg,#A8D5B5,#6BB88A);
+}
+.task-row[data-choice="true"]:not(.done) {
+  background:linear-gradient(135deg,#B5A8D5,#9A8BC4);
+}
+.task-row[data-choice="true"].done {
+  background:linear-gradient(135deg,#A8D5B5,#6BB88A);
+}
+.task-row.last-step { border-color:rgba(255,255,255,.5); }
 .task-row.dragging {
   opacity:.55; transform:scale(.98);
   box-shadow:0 8px 24px rgba(0,0,0,.18);
@@ -141,8 +151,8 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 .drag-handle {
   width:56px; min-height:80px; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
-  font-size:1.4rem; color:#CCC; cursor:grab;
-  touch-action:none; /* must be none to allow dragging */
+  font-size:1.4rem; color:rgba(255,255,255,.5); cursor:grab;
+  touch-action:none;
   user-select:none;
 }
 .task-row.done .drag-handle { visibility:hidden; }
@@ -150,18 +160,19 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 
 .task-content { flex:1; padding:14px 4px; min-width:0; }
 .task-emoji-big { font-size:clamp(2rem,7vw,2.6rem); line-height:1; }
-.task-name { font-size:clamp(.88rem,2.6vw,1.05rem); font-weight:600; margin-top:4px; line-height:1.25; }
-.task-dur  { font-size:.75rem; color:var(--muted); margin-top:2px; }
-.task-tag  { display:inline-block; font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:20px; margin-top:3px; background:#C8EDD8; color:#1A5E32; }
+.task-name { font-size:clamp(.88rem,2.6vw,1.05rem); font-weight:700; margin-top:4px; line-height:1.25; color:#fff; }
+.task-dur  { font-size:.75rem; color:rgba(255,255,255,.75); margin-top:2px; }
+.task-tag  { display:inline-block; font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:20px; margin-top:3px; background:rgba(255,255,255,.3); color:#fff; }
 
 .btn-check {
   width:72px; height:72px; margin:4px 8px 4px 4px; flex-shrink:0;
-  border-radius:50%; border:3px solid #E0E0E0;
-  background:#fff; font-size:1.8rem; cursor:pointer;
+  border-radius:50%; border:3px solid rgba(255,255,255,.5);
+  background:rgba(255,255,255,.25); font-size:1.8rem; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  transition:all .15s;
+  transition:all .15s; color:#fff; font-weight:700;
 }
-.btn-check:active { transform:scale(.9); background:var(--green); border-color:var(--green); }
+.btn-check:active { transform:scale(.9); background:rgba(255,255,255,.5); }
+.task-row.done .btn-check { background:rgba(255,255,255,.35); border-color:rgba(255,255,255,.4); }
 .task-row.done .btn-check { background:var(--green); border-color:var(--green); font-size:1.6rem; }
 
 /* ══ CHECK PULSE ANIM ══ */
