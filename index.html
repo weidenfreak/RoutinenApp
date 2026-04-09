@@ -425,10 +425,10 @@ const TASKS = {
       { id:'pyjama', emoji:'👚', label:'Schlafanzug anziehen',  duration:5 },
     ],
     choice: [
-      { id:'episode',  emoji:'📺', label:'Folge schauen', duration:25 },
-      { id:'readbook', emoji:'📖', label:'Vorlesen',       duration:25 },
-      { id:'toben',    emoji:'🏃', label:'Toben',          duration:25 },
-      { id:'play',     emoji:'🎲', label:'Spielen',        duration:25 },
+      { id:'episode',  emoji:'📺', label:'Folge schauen' },
+      { id:'readbook', emoji:'📖', label:'Vorlesen'       },
+      { id:'toben',    emoji:'🏃', label:'Toben'          },
+      { id:'play',     emoji:'🎲', label:'Spielen'        },
     ],
   },
 };
@@ -651,7 +651,7 @@ function renderRow(t, ms) {
 
 function renderChoiceRow(task, ms, available) {
   const done = ms.completed.includes(task.id);
-  const h    = taskRowHeight(task.duration);
+  const h    = 120; // Wahlaufgabe hat keine feste Dauer
 
   const checkBtn = done
     ? `<button class="btn-check" onclick="unfinishTask('${task.id}')">✅</button>`
@@ -668,7 +668,6 @@ function renderChoiceRow(task, ms, available) {
   <div class="task-content">
     <div class="task-emoji-big">${task.emoji}</div>
     <div class="task-name">${task.label}</div>
-    <div class="task-dur">${task.duration}&nbsp;min</div>
     <span class="task-tag choice-tag">Wahlaufgabe</span>
     ${swapChips}
   </div>
@@ -678,7 +677,7 @@ function renderChoiceRow(task, ms, available) {
 
 function renderChoicePicker(available) {
   const chips = available.map(t =>
-    `<button class="choice-chip" onclick="selectChoice('${t.id}')">${t.emoji} ${t.label} · ${t.duration} min</button>`
+    `<button class="choice-chip" onclick="selectChoice('${t.id}')">${t.emoji} ${t.label}</button>`
   ).join('');
   return `<div class="choice-section">
     <div class="choice-section-label">Wahlaufgabe</div>
