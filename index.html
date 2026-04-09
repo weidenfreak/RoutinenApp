@@ -54,6 +54,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 .mode-card:active { transform:scale(.97); }
 .mode-card:active::after { background:rgba(255,255,255,.15); }
 .mode-card.morning { background:linear-gradient(135deg,#F9B84B 0%,#F07A30 100%); }
+.mode-card.morning.disabled { background:#CCC; opacity:.5; cursor:not-allowed; pointer-events:none; }
 .mode-card.evening { background:linear-gradient(135deg,#7B9FD4 0%,#4A6FA5 100%); }
 .mode-emoji { font-size:clamp(3.5rem,11vw,5.5rem); line-height:1; }
 .mode-label { font-size:clamp(1.4rem,4.5vw,2.1rem); font-weight:700; }
@@ -340,7 +341,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 <!-- ══ HOME SCREEN ══ -->
 <div id="screen-home" class="screen active">
   <div class="app-title">Was machen wir heute? 🌟</div>
-  <div class="mode-card morning" onclick="showRoutine('morning')">
+  <div class="mode-card morning disabled">
     <div class="mode-emoji">🌅</div>
     <div class="mode-label">Morgenroutine</div>
   </div>
