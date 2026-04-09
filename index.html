@@ -596,17 +596,15 @@ function renderRoutine() {
     const choiceTask = ms.choiceId ? TASKS.evening.choice.find(t => t.id === ms.choiceId) : null;
     const available  = TASKS.evening.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
 
-    let html = order.map(id => {
-      const mand = mandatory.find(t => t.id === id);
-      if (mand) return renderRow(mand, ms);
-      if (choiceTask && id === choiceTask.id) return renderChoiceRow(choiceTask, ms, available);
-      return '';
-    }).join('');
+    // Pflichtaufgaben zuerst (Wahlaufgabe aus order ausfiltern)
+    let html = order
+      .filter(id => mandatory.some(t => t.id === id))
+      .map(id => renderRow(mandatory.find(t => t.id === id), ms))
+      .join('');
 
-    // Kein Wahl noch gewählt → Picker am Ende
-    if (!ms.choiceId) {
-      html += renderChoicePicker(available);
-    }
+    // Wahlaufgabe immer zuletzt
+    if (choiceTask) html += renderChoiceRow(choiceTask, ms, available);
+    else            html += renderChoicePicker(available);
 
     list.innerHTML = html;
   } else {
