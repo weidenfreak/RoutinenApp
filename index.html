@@ -579,7 +579,7 @@ function showRoutine(mode) {
   renderRoutine();
   switchScreen('screen-routine');
   updateTimeDisplay();
-  timeIv = setInterval(updateTimeDisplay, 30000);
+  timeIv = setInterval(updateTimeDisplay, 10000);
   checkWeather();
 }
 
@@ -735,31 +735,30 @@ function renderEveningBudgetBar(container) {
   const deadline  = new Date(); deadline.setHours(21, 0, 0, 0);
   const start     = ms.globalStart ? new Date(ms.globalStart) : new Date();
   const totalWin  = Math.max(1, (deadline - start) / 60000);
-  const nowMin    = Math.max(0, (deadline - Date.now()) / 60000);
+  const elapsed   = Math.min((Date.now() - start) / 60000, totalWin); // tatsächlich vergangene Zeit
+  const timeLeft  = Math.max(0, totalWin - elapsed);
 
-  const doneDur = ms.completed.reduce((sum, id) => {
-    const t = getAllTasks('evening').find(x => x.id === id);
-    return sum + (t?.duration ?? 0);
-  }, 0);
   const remainMandDur = mandatory
     .filter(t => !ms.completed.includes(t.id))
     .reduce((sum, t) => sum + t.duration, 0);
   const choiceTask = ms.choiceId ? TASKS.evening.choice.find(t => t.id === ms.choiceId) : null;
   const choiceDur  = (choiceTask && !ms.completed.includes(ms.choiceId)) ? choiceTask.duration : 0;
-  const bufferDur  = Math.max(0, totalWin - doneDur - remainMandDur - choiceDur);
+  const bufferDur  = Math.max(0, timeLeft - remainMandDur - choiceDur);
 
-  const pDone   = (doneDur       / totalWin * 100).toFixed(1);
-  const pMand   = (remainMandDur / totalWin * 100).toFixed(1);
-  const pChoice = (choiceDur     / totalWin * 100).toFixed(1);
-  const pBuf    = (bufferDur     / totalWin * 100).toFixed(1);
+  // Segmente als Anteil am Gesamtfenster
+  const pElapsed = (elapsed       / totalWin * 100).toFixed(1);
+  const pMand    = (remainMandDur / totalWin * 100).toFixed(1);
+  const pChoice  = (choiceDur     / totalWin * 100).toFixed(1);
+  const pBuf     = (bufferDur     / totalWin * 100).toFixed(1);
 
+  const nowMin = timeLeft;
   const h = Math.floor(nowMin / 60);
   const m = Math.round(nowMin % 60);
   const remaining = h > 0 ? `${h} h ${m} min` : `${Math.round(nowMin)} min`;
 
   container.innerHTML = `
     <div class="budget-bar">
-      <div class="budget-seg budget-done"      style="width:${pDone}%"></div>
+      <div class="budget-seg budget-done"      style="width:${pElapsed}%"></div>
       <div class="budget-seg budget-mandatory" style="width:${pMand}%"></div>
       <div class="budget-seg budget-choice"    style="width:${pChoice}%"></div>
       <div class="budget-seg budget-buffer"    style="width:${pBuf}%"></div>
