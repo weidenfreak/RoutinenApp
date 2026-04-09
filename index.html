@@ -816,8 +816,28 @@ function onDragMove(e) {
   e.preventDefault();
   const { listEl, el } = dragState;
   const y = e.clientY;
+  const isChoice = el.dataset.choice === 'true';
 
-  const siblings = [...listEl.querySelectorAll('.task-row:not(.dragging)')]
+  if (isChoice) {
+    // Wahlaufgabe darf nur ganz oben oder ganz unten landen
+    const mandatoryRows = [...listEl.querySelectorAll('.task-row:not(.dragging):not([data-choice])')];
+    const firstMandatory = mandatoryRows[0];
+    if (firstMandatory) {
+      const rect = firstMandatory.getBoundingClientRect();
+      if (y < rect.top + rect.height / 2) {
+        listEl.insertBefore(el, firstMandatory);
+      } else {
+        listEl.appendChild(el);
+      }
+    } else {
+      listEl.appendChild(el);
+    }
+    return;
+  }
+
+  // Pflichtaufgaben: normal sortierbar, aber nicht hinter die Wahlaufgabe wenn sie oben ist
+  const choiceRow = listEl.querySelector('.task-row[data-choice]:not(.dragging)');
+  const siblings = [...listEl.querySelectorAll('.task-row:not(.dragging):not([data-choice])')]
     .filter(r => r.dataset.last !== 'true');
   const lastRow = listEl.querySelector('.task-row[data-last="true"]');
 
@@ -827,9 +847,10 @@ function onDragMove(e) {
     if (y < rect.top + rect.height / 2) { insertBefore = r; break; }
   }
 
-  if (insertBefore)       listEl.insertBefore(el, insertBefore);
-  else if (lastRow)       listEl.insertBefore(el, lastRow);
-  else                    listEl.appendChild(el);
+  if (insertBefore)   listEl.insertBefore(el, insertBefore);
+  else if (lastRow)   listEl.insertBefore(el, lastRow);
+  else if (choiceRow) listEl.insertBefore(el, choiceRow);
+  else                listEl.appendChild(el);
 }
 
 function onDragEnd() {
