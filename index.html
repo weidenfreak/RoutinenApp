@@ -667,6 +667,7 @@ function showPlan(mode) {
   renderPlanLibrary(mode);
   initPlanLibDrag(document.getElementById('plan-library'));
   renderPlanTimeline(mode);
+  initPlanTimelineDrag(document.getElementById('plan-timeline'));
   updateFreeTimeLabel();
   switchScreen('screen-plan');
   try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {}
@@ -736,7 +737,6 @@ function renderPlanTimeline() {
   }
 
   tl.innerHTML = html;
-  initPlanTimelineDrag(tl);
 }
 
 function updateFreeTimeLabel() {
