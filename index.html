@@ -84,7 +84,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 }
 .back-btn:active { background:#E0E0E0; }
 
-/* ══ TIME DISPLAY ══ */
+/* ══ TIME DISPLAY (Morgen) ══ */
 .time-display { flex:1; display:flex; flex-direction:column; gap:5px; }
 .time-track { height:14px; background:#EEE; border-radius:7px; overflow:hidden; }
 .time-fill {
@@ -94,6 +94,27 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 }
 .time-fill.over { background:linear-gradient(90deg,var(--amber),#F4A942); }
 .time-label { font-size:.82rem; font-weight:700; color:var(--muted); text-align:right; }
+
+/* ══ BUDGET BAR (Abend) ══ */
+.budget-bar { height:14px; background:#EEE; border-radius:7px; overflow:hidden; display:flex; }
+.budget-seg { height:100%; transition:width .8s ease; min-width:0; flex-shrink:0; }
+.budget-done      { background:linear-gradient(90deg,#A8D5B5,#6BB88A); }
+.budget-mandatory { background:linear-gradient(90deg,#9DD4CF,#5BB8B0); }
+.budget-choice    { background:linear-gradient(90deg,#B5A8D5,#9A8BC4); }
+.budget-buffer    { background:#DDD; }
+.budget-labels { display:flex; justify-content:space-between; font-size:.78rem; font-weight:700; color:var(--muted); margin-top:2px; }
+
+/* ══ CHOICE SECTION ══ */
+.choice-section { background:#fff; border-radius:var(--r-md); box-shadow:var(--sh-s); padding:16px; }
+.choice-section-label { font-size:.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px; }
+.choice-chips { display:flex; flex-wrap:wrap; gap:8px; }
+.choice-chip { padding:10px 14px; border-radius:var(--r-sm); border:2px solid #EEE; background:#F8F8F8; font-size:.88rem; font-weight:600; cursor:pointer; transition:all .15s; color:var(--text); }
+.choice-chip.active { background:#EEE8FF; border-color:#9A8BC4; color:#4A3A8A; }
+.choice-chip:active { transform:scale(.95); }
+.choice-swap-row { display:flex; gap:8px; padding:6px 58px 4px; flex-wrap:wrap; }
+.choice-swap-btn { padding:5px 12px; border-radius:20px; border:1.5px solid #DDD; background:#F8F8F8; font-size:.82rem; cursor:pointer; color:var(--muted); font-weight:600; }
+.choice-swap-btn:active { background:#EEE; }
+.task-tag.choice-tag { background:#EEE8FF; color:#6A4A9A; }
 
 /* ══ ROUTINE BODY ══ */
 .routine-body { padding:16px; display:flex; flex-direction:column; gap:10px; flex:1; }
@@ -321,28 +342,11 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 <div id="screen-routine" class="screen">
   <div class="routine-header">
     <button class="back-btn" onclick="showHome()">‹</button>
-    <div class="time-display">
-      <div class="time-track"><div class="time-fill" id="time-fill"></div></div>
-      <div class="time-label" id="time-label">…</div>
-    </div>
+    <div class="time-display" id="time-display"></div>
   </div>
   <div class="routine-body">
     <div id="task-list"></div>
   </div>
-</div>
-
-<!-- ══ PLAN SCREEN ══ -->
-<div id="screen-plan" class="screen">
-  <div class="plan-library" id="plan-library"></div>
-  <div class="plan-timeline-wrap">
-    <div class="plan-tl-header">
-      <div class="plan-tl-title">19:25 – 21:00</div>
-      <div class="plan-free-label" id="plan-free-label">⏱ … min frei</div>
-    </div>
-    <div class="plan-timeline" id="plan-timeline"></div>
-    <button class="btn-letsgo hidden" id="btn-letsgo" onclick="finishPlanning()">Los geht's! 🚀</button>
-  </div>
-  <div class="landscape-hint">📱↔️<br>Bitte Tablet quer halten</div>
 </div>
 
 <!-- ══ COMPLETION OVERLAY ══ -->
@@ -367,7 +371,6 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
     <div class="modal-section">
       <div class="modal-section-title">🌙 Abend-Wahlaufgaben</div>
       <div id="choice-settings"></div>
-      <button class="btn-replan" onclick="replan()">🔄 Abendroutine neu planen</button>
       <button class="btn-reset-evening" onclick="resetEvening()">↩️ Abendroutine zurücksetzen</button>
     </div>
     <button class="modal-close" onclick="closeSettings()">Fertig</button>
@@ -420,7 +423,7 @@ const TASKS = {
 // ── STATE ────────────────────────────────────────────────────────
 
 function newRoutine() {
-  return { date:null, order:null, completed:[], globalStart:null, planDone:false };
+  return { date:null, order:null, completed:[], globalStart:null, choiceId:null };
 }
 
 function defaults() {
@@ -462,16 +465,29 @@ function visibleMandatory(mode) {
 }
 
 function getAllTasks(mode) {
-  const choice = TASKS[mode].choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
-  return [...visibleMandatory(mode), ...choice];
+  if (mode === 'morning') {
+    const choice = TASKS[mode].choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+    return [...visibleMandatory(mode), ...choice];
+  }
+  // Abend: nur Pflicht + gewählte Wahlaufgabe
+  const mandatory = visibleMandatory(mode);
+  const choiceTask = state.evening.choiceId
+    ? TASKS.evening.choice.find(t => t.id === state.evening.choiceId) : null;
+  return choiceTask ? [...mandatory, choiceTask] : mandatory;
 }
 
 function getDefaultOrder(mode) {
   const mand    = visibleMandatory(mode);
   const nonLast = mand.filter(t => !t.isLast);
   const last    = mand.find(t => t.isLast);
-  const choice  = TASKS[mode].choice;
-  const ids     = [...nonLast.map(t => t.id), ...choice.map(t => t.id)];
+  if (mode === 'morning') {
+    const choice = TASKS[mode].choice;
+    const ids    = [...nonLast.map(t => t.id), ...choice.map(t => t.id)];
+    if (last) ids.push(last.id);
+    return ids;
+  }
+  // Abend: nur Pflichtaufgaben (Wahlaufgabe separat via choiceId)
+  const ids = nonLast.map(t => t.id);
   if (last) ids.push(last.id);
   return ids;
 }
@@ -542,8 +558,12 @@ function showHome() {
 function showRoutine(mode) {
   currentMode = mode;
   resetDaily();
-  if (mode === 'evening' && !state.evening.planDone) { showPlan('evening'); return; }
   if (!state[mode].order) { state[mode].order = getDefaultOrder(mode); save(); }
+  // Abend: Startzeit setzen wenn noch nicht gesetzt
+  if (mode === 'evening' && !state.evening.globalStart) {
+    state.evening.globalStart = Date.now();
+    save();
+  }
   renderRoutine();
   switchScreen('screen-routine');
   updateTimeDisplay();
@@ -556,17 +576,28 @@ function showRoutine(mode) {
 function renderRoutine() {
   const mode = currentMode;
   const ms   = state[mode];
-  const all  = getAllTasks(mode);
   const list = document.getElementById('task-list');
-
   const order = ms.order || getDefaultOrder(mode);
 
-  list.innerHTML = order.map(id => {
-    const t = all.find(x => x.id === id);
-    if (!t) return '';
-    return renderRow(t, ms);
-  }).join('');
+  // Nur Pflichtaufgaben in der sortierbaren Liste
+  const mandatory = visibleMandatory(mode);
+  let html = order
+    .filter(id => mandatory.some(t => t.id === id))
+    .map(id => {
+      const t = mandatory.find(x => x.id === id);
+      return t ? renderRow(t, ms) : '';
+    }).join('');
 
+  // Wahlaufgaben-Sektion für Abend
+  if (mode === 'evening') {
+    html += renderChoiceSection(ms);
+  } else {
+    // Morgen: Wahlaufgaben auch rendern (in order enthalten)
+    const choiceTasks = getAllTasks(mode).filter(t => TASKS[mode].choice.some(c => c.id === t.id));
+    html += choiceTasks.map(t => renderRow(t, ms)).join('');
+  }
+
+  list.innerHTML = html;
   initDrag(list);
 }
 
@@ -578,11 +609,7 @@ function renderRow(t, ms) {
   if (done)   rowCls += ' done';
   if (isLast && !done) rowCls += ' last-step';
 
-  const handle = `<div class="drag-handle">⠿</div>`;
-
-  const tag = (isLast && !done)
-    ? `<span class="task-tag">Letzter Schritt</span>`
-    : '';
+  const tag = (isLast && !done) ? `<span class="task-tag">Letzter Schritt</span>` : '';
 
   const content = `<div class="task-content">
     <div class="task-emoji-big">${t.emoji}</div>
@@ -591,38 +618,127 @@ function renderRow(t, ms) {
     ${tag}
   </div>`;
 
-  const checkInner = done ? '✅' : '✓';
   const checkBtn = done
     ? `<button class="btn-check" onclick="unfinishTask('${t.id}')">✅</button>`
     : `<button class="btn-check" onclick="finishTask('${t.id}')">✓</button>`;
 
   return `<div class="${rowCls}" data-id="${t.id}"${isLast ? ' data-last="true"' : ''}>
-  ${handle}${content}${checkBtn}
+  <div class="drag-handle">⠿</div>${content}${checkBtn}
 </div>`;
+}
+
+function renderChoiceSection(ms) {
+  const available = TASKS.evening.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+
+  if (!ms.choiceId) {
+    const chips = available.map(t =>
+      `<button class="choice-chip" onclick="selectChoice('${t.id}')">${t.emoji} ${t.label} · ${t.duration} min</button>`
+    ).join('');
+    return `<div class="choice-section">
+      <div class="choice-section-label">Wahlaufgabe</div>
+      <div class="choice-chips">${chips}</div>
+    </div>`;
+  }
+
+  const task = TASKS.evening.choice.find(t => t.id === ms.choiceId);
+  const done = ms.completed.includes(ms.choiceId);
+
+  const checkBtn = done
+    ? `<button class="btn-check" onclick="unfinishTask('${ms.choiceId}')">✅</button>`
+    : `<button class="btn-check" onclick="finishTask('${ms.choiceId}')">✓</button>`;
+
+  const swapRow = !done ? `<div class="choice-swap-row">${
+    available.filter(t => t.id !== ms.choiceId).map(t =>
+      `<button class="choice-swap-btn" onclick="selectChoice('${t.id}')">${t.emoji} ${t.label}</button>`
+    ).join('')
+  }</div>` : '';
+
+  return `<div class="task-row${done ? ' done' : ''}" data-id="${task.id}" data-choice="true">
+    <div class="drag-handle" style="visibility:hidden"></div>
+    <div class="task-content">
+      <div class="task-emoji-big">${task.emoji}</div>
+      <div class="task-name">${task.label}</div>
+      <div class="task-dur">${task.duration}&nbsp;min</div>
+      <span class="task-tag choice-tag">Wahlaufgabe</span>
+    </div>
+    ${checkBtn}
+  </div>${swapRow}`;
+}
+
+function selectChoice(id) {
+  // Alte Wahlaufgabe aus completed entfernen falls vorhanden
+  if (state.evening.choiceId) {
+    state.evening.completed = state.evening.completed.filter(x => x !== state.evening.choiceId);
+  }
+  state.evening.choiceId = id;
+  save();
+  renderRoutine();
+  updateTimeDisplay();
 }
 
 // ── TIME DISPLAY ─────────────────────────────────────────────────
 
 function updateTimeDisplay() {
   if (!currentMode) return;
-  const total   = getTotalMin(currentMode);
-  const elapsed = getElapsedMin(currentMode);
-
-  const fill  = document.getElementById('time-fill');
-  const label = document.getElementById('time-label');
-  if (!fill || !label) return;
-
-  if (!state[currentMode].globalStart) {
-    fill.style.width = '0%';
-    label.textContent = `${total} min geplant`;
-    fill.classList.remove('over');
-    return;
+  const container = document.getElementById('time-display');
+  if (!container) return;
+  if (currentMode === 'morning') {
+    renderMorningTimeDisplay(container);
+  } else {
+    renderEveningBudgetBar(container);
   }
+}
 
-  const pct = total > 0 ? (elapsed / total) * 100 : 0;
-  fill.style.width = Math.min(pct, 100) + '%';
-  fill.classList.toggle('over', pct > 100);
-  label.textContent = `${Math.round(elapsed)} / ${total} min`;
+function renderMorningTimeDisplay(container) {
+  const total   = getTotalMin('morning');
+  const elapsed = getElapsedMin('morning');
+  const started = !!state.morning.globalStart;
+  const pct     = started && total > 0 ? Math.min((elapsed / total) * 100, 100) : 0;
+  const over    = elapsed > total;
+  container.innerHTML = `
+    <div class="time-track"><div class="time-fill${over ? ' over' : ''}" style="width:${pct}%"></div></div>
+    <div class="time-label">${started ? `${Math.round(elapsed)} / ${total} min` : `${total} min geplant`}</div>`;
+}
+
+function renderEveningBudgetBar(container) {
+  const ms        = state.evening;
+  const mandatory = visibleMandatory('evening');
+  const deadline  = new Date(); deadline.setHours(21, 0, 0, 0);
+  const start     = ms.globalStart ? new Date(ms.globalStart) : new Date();
+  const totalWin  = Math.max(1, (deadline - start) / 60000);
+  const nowMin    = Math.max(0, (deadline - Date.now()) / 60000);
+
+  const doneDur = ms.completed.reduce((sum, id) => {
+    const t = getAllTasks('evening').find(x => x.id === id);
+    return sum + (t?.duration ?? 0);
+  }, 0);
+  const remainMandDur = mandatory
+    .filter(t => !ms.completed.includes(t.id))
+    .reduce((sum, t) => sum + t.duration, 0);
+  const choiceTask = ms.choiceId ? TASKS.evening.choice.find(t => t.id === ms.choiceId) : null;
+  const choiceDur  = (choiceTask && !ms.completed.includes(ms.choiceId)) ? choiceTask.duration : 0;
+  const bufferDur  = Math.max(0, totalWin - doneDur - remainMandDur - choiceDur);
+
+  const pDone   = (doneDur       / totalWin * 100).toFixed(1);
+  const pMand   = (remainMandDur / totalWin * 100).toFixed(1);
+  const pChoice = (choiceDur     / totalWin * 100).toFixed(1);
+  const pBuf    = (bufferDur     / totalWin * 100).toFixed(1);
+
+  const h = Math.floor(nowMin / 60);
+  const m = Math.round(nowMin % 60);
+  const remaining = h > 0 ? `${h} h ${m} min` : `${Math.round(nowMin)} min`;
+
+  container.innerHTML = `
+    <div class="budget-bar">
+      <div class="budget-seg budget-done"      style="width:${pDone}%"></div>
+      <div class="budget-seg budget-mandatory" style="width:${pMand}%"></div>
+      <div class="budget-seg budget-choice"    style="width:${pChoice}%"></div>
+      <div class="budget-seg budget-buffer"    style="width:${pBuf}%"></div>
+    </div>
+    <div class="budget-labels">
+      <span>Schlafenszeit 21:00</span>
+      <span>noch ${remaining}</span>
+    </div>`;
 }
 
 // ── TASK ACTIONS ─────────────────────────────────────────────────
@@ -663,313 +779,9 @@ function unfinishTask(id) {
   updateTimeDisplay();
 }
 
-// ── PLAN SCREEN ──────────────────────────────────────────────────
+// ── DRAG & DROP (Routine-Liste) ───────────────────────────────────
 
-const EVENING_TOTAL_MIN = 95;   // 19:25 – 21:00
-const TIMELINE_SCALE    = 6.4;  // px per minute
-const BLOCK_MIN_H       = 44;   // px minimum block height
-
-let planOrder = [];   // task IDs currently in timeline
-let planDrag  = null; // active drag state
-
-function blockH(durationMin) {
-  return Math.max(BLOCK_MIN_H, durationMin * TIMELINE_SCALE);
-}
-
-function getPlannedMin() {
-  const all = getAllTasks('evening');
-  return planOrder.reduce((s, id) => {
-    const t = all.find(x => x.id === id);
-    return s + (t?.duration ?? 0);
-  }, 0);
-}
-
-function showPlan(mode) {
-  planOrder = [];
-  renderPlanLibrary(mode);
-  initPlanLibDrag(document.getElementById('plan-library'));
-  renderPlanTimeline(mode);
-  initPlanTimelineDrag(document.getElementById('plan-timeline'));
-  updateFreeTimeLabel();
-  switchScreen('screen-plan');
-  try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {}
-}
-
-function renderPlanLibrary(mode) {
-  const lib = document.getElementById('plan-library');
-  const mandatory = visibleMandatory(mode);
-  const choice    = TASKS[mode].choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
-  const allMandatoryPlaced = mandatory.every(t => planOrder.includes(t.id));
-
-  let html = `<div class="plan-lib-title">Pflicht</div>`;
-  mandatory.forEach(t => {
-    const used = planOrder.includes(t.id);
-    html += `<div class="plan-lib-card${used ? ' used' : ''}" data-id="${t.id}" data-type="mandatory">
-      <div class="card-emoji">${t.emoji}</div>
-      <div class="card-info">
-        <div class="card-name">${t.label}</div>
-        <div class="card-dur">${t.duration} min</div>
-      </div>
-    </div>`;
-  });
-
-  html += `<div class="plan-lib-title" style="margin-top:16px">Wahl</div>`;
-  choice.forEach(t => {
-    const used   = planOrder.includes(t.id);
-    const locked = !allMandatoryPlaced && !used;
-    html += `<div class="plan-lib-card${used ? ' used' : locked ? ' locked' : ''}" data-id="${t.id}" data-type="choice">
-      <div class="card-emoji">${t.emoji}</div>
-      <div class="card-info">
-        <div class="card-name">${t.label}</div>
-        <div class="card-dur">${t.duration} min</div>
-      </div>
-    </div>`;
-  });
-
-  lib.innerHTML = html;
-}
-
-function renderPlanTimeline() {
-  const tl      = document.getElementById('plan-timeline');
-  const all     = getAllTasks('evening');
-  const freeMin = EVENING_TOTAL_MIN - getPlannedMin();
-
-  if (!planOrder.length) {
-    tl.innerHTML = '<div class="plan-timeline-empty" id="plan-timeline-empty">← Aufgaben hierher ziehen</div>';
-    return;
-  }
-
-  let html = '';
-  planOrder.forEach(id => {
-    const t     = all.find(x => x.id === id);
-    if (!t) return;
-    const h     = blockH(t.duration);
-    const type  = TASKS.evening.mandatory.some(m => m.id === id) ? 'mandatory' : 'choice';
-    html += `<div class="plan-block ${type}" data-id="${id}" style="height:${h}px">
-      <span class="block-emoji">${t.emoji}</span>
-      <span class="block-name">${t.label}</span>
-      <span class="block-dur">${t.duration} min</span>
-      <button class="block-remove" onclick="removeFromTimeline('${id}')">✕</button>
-    </div>`;
-  });
-
-  if (freeMin > 0) {
-    const h = Math.max(30, freeMin * TIMELINE_SCALE);
-    html += `<div class="plan-free-block" style="height:${h}px">✨ ${Math.round(freeMin)} min frei</div>`;
-  }
-
-  tl.innerHTML = html;
-}
-
-function updateFreeTimeLabel() {
-  const freeMin = EVENING_TOTAL_MIN - getPlannedMin();
-  const label   = document.getElementById('plan-free-label');
-  if (label) label.textContent = `⏱ ${Math.max(0, Math.round(freeMin))} min frei`;
-}
-
-function checkUnlockChoice() {
-  const mandatory     = visibleMandatory('evening');
-  const allPlaced     = mandatory.every(t => planOrder.includes(t.id));
-  const letsgoBtn     = document.getElementById('btn-letsgo');
-  if (letsgoBtn) letsgoBtn.classList.toggle('hidden', !allPlaced);
-
-  // Re-render library to unlock/lock choice cards
-  renderPlanLibrary('evening');
-}
-
-function removeFromTimeline(taskId) {
-  const idx = planOrder.indexOf(taskId);
-  if (idx !== -1) planOrder.splice(idx, 1);
-  renderPlanTimeline();
-  updateFreeTimeLabel();
-  checkUnlockChoice();
-}
-
-function insertIntoTimeline(taskId, beforeIndex) {
-  const choiceIds = TASKS['evening'].choice.map(t => t.id);
-  const isChoice  = choiceIds.includes(taskId);
-
-  // Remove if already present (reorder)
-  const existing = planOrder.indexOf(taskId);
-  if (existing !== -1) planOrder.splice(existing, 1);
-
-  // Nur eine Wahlaufgabe erlaubt — andere rauswerfen
-  if (isChoice) {
-    choiceIds.forEach(id => {
-      if (id !== taskId) {
-        const idx = planOrder.indexOf(id);
-        if (idx !== -1) planOrder.splice(idx, 1);
-      }
-    });
-  }
-
-  let insertAt = beforeIndex;
-  if (existing !== -1 && existing < beforeIndex) insertAt--;
-  insertAt = Math.max(0, Math.min(insertAt, planOrder.length));
-  planOrder.splice(insertAt, 0, taskId);
-
-  renderPlanTimeline();
-  updateFreeTimeLabel();
-  checkUnlockChoice();
-}
-
-function getDropIndex(tl, yClient) {
-  const blocks = [...tl.querySelectorAll('.plan-block')];
-  for (let i = 0; i < blocks.length; i++) {
-    const rect = blocks[i].getBoundingClientRect();
-    if (yClient < rect.top + rect.height / 2) return i;
-  }
-  return blocks.length;
-}
-
-// ── PLAN DRAG: Library card → Timeline ───────────────────────────
-
-function initPlanLibDrag(lib) {
-  lib.addEventListener('pointerdown', e => {
-    const card = e.target.closest('.plan-lib-card');
-    if (!card || card.classList.contains('used') || card.classList.contains('locked')) return;
-
-    const taskId = card.dataset.id;
-    e.preventDefault();
-
-    // Create ghost
-    const rect  = card.getBoundingClientRect();
-    const ghost = card.cloneNode(true);
-    ghost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;
-      width:${rect.width}px;opacity:.85;pointer-events:none;z-index:500;
-      border-radius:var(--r-md);box-shadow:0 8px 24px rgba(0,0,0,.25);
-      background:#fff;display:flex;align-items:center;gap:10px;padding:12px;`;
-    document.body.appendChild(ghost);
-    card.style.opacity = '0.3';
-
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-
-    planDrag = { type:'from-lib', taskId, ghost, card, offsetX, offsetY, dropIndicator:null };
-
-    document.addEventListener('pointermove', onPlanMove, { passive:false });
-    document.addEventListener('pointerup',   onPlanUp);
-    document.addEventListener('pointercancel', onPlanCancel);
-  });
-}
-
-// ── PLAN DRAG: Reorder inside Timeline ───────────────────────────
-
-function initPlanTimelineDrag(tl) {
-  tl.addEventListener('pointerdown', e => {
-    const block = e.target.closest('.plan-block');
-    if (!block || e.target.classList.contains('block-remove')) return;
-
-    const taskId = block.dataset.id;
-    e.preventDefault();
-
-    const rect  = block.getBoundingClientRect();
-    const ghost = block.cloneNode(true);
-    ghost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;
-      width:${rect.width}px;height:${rect.height}px;opacity:.85;pointer-events:none;z-index:500;
-      border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);`;
-    document.body.appendChild(ghost);
-    block.classList.add('tl-dragging');
-
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-
-    planDrag = { type:'reorder', taskId, ghost, block, offsetX, offsetY, dropIndicator:null };
-
-    document.addEventListener('pointermove', onPlanMove, { passive:false });
-    document.addEventListener('pointerup',   onPlanUp);
-    document.addEventListener('pointercancel', onPlanCancel);
-  });
-}
-
-function onPlanMove(e) {
-  if (!planDrag) return;
-  e.preventDefault();
-
-  const { ghost, offsetX, offsetY } = planDrag;
-  ghost.style.left = (e.clientX - offsetX) + 'px';
-  ghost.style.top  = (e.clientY - offsetY) + 'px';
-
-  // Remove old indicator
-  if (planDrag.dropIndicator) { planDrag.dropIndicator.remove(); planDrag.dropIndicator = null; }
-
-  const tl = document.getElementById('plan-timeline');
-  const tlRect = tl.getBoundingClientRect();
-
-  if (e.clientX >= tlRect.left && e.clientX <= tlRect.right &&
-      e.clientY >= tlRect.top  && e.clientY <= tlRect.bottom) {
-    const idx = getDropIndex(tl, e.clientY);
-    const blocks = [...tl.querySelectorAll('.plan-block')];
-    const indicator = document.createElement('div');
-    indicator.className = 'plan-drop-indicator';
-    planDrag.dropIndicator = indicator;
-    if (idx < blocks.length) {
-      tl.insertBefore(indicator, blocks[idx]);
-    } else {
-      const freeBlock = tl.querySelector('.plan-free-block');
-      if (freeBlock) tl.insertBefore(indicator, freeBlock);
-      else tl.appendChild(indicator);
-    }
-  }
-}
-
-function onPlanUp(e) {
-  if (!planDrag) return;
-
-  const tl     = document.getElementById('plan-timeline');
-  const tlRect = tl.getBoundingClientRect();
-  const { taskId, type, ghost, card, block } = planDrag;
-
-  // Cleanup ghost + indicator
-  ghost.remove();
-  if (planDrag.dropIndicator) planDrag.dropIndicator.remove();
-  if (type === 'from-lib' && card) card.style.opacity = '';
-  if (type === 'reorder'  && block) block.classList.remove('tl-dragging');
-
-  const overTimeline = e.clientX >= tlRect.left && e.clientX <= tlRect.right &&
-                       e.clientY >= tlRect.top  && e.clientY <= tlRect.bottom;
-
-  // Re-read blocks BEFORE insert (indicator was removed)
-  if (overTimeline) {
-    const dropIdx = getDropIndex(tl, e.clientY);
-    insertIntoTimeline(taskId, dropIdx);
-  } else if (type === 'reorder') {
-    // Dropped outside — remove from timeline
-    removeFromTimeline(taskId);
-  } else {
-    // Cancelled lib drag — just re-render library to restore opacity
-    renderPlanLibrary('evening');
-  }
-
-  cleanupPlanDrag();
-}
-
-function onPlanCancel() {
-  if (!planDrag) return;
-  const { ghost, card, block, dropIndicator } = planDrag;
-  ghost.remove();
-  if (dropIndicator) dropIndicator.remove();
-  if (card)  card.style.opacity = '';
-  if (block) block.classList.remove('tl-dragging');
-  renderPlanLibrary('evening');
-  renderPlanTimeline();
-  cleanupPlanDrag();
-}
-
-function cleanupPlanDrag() {
-  planDrag = null;
-  document.removeEventListener('pointermove', onPlanMove);
-  document.removeEventListener('pointerup',   onPlanUp);
-  document.removeEventListener('pointercancel', onPlanCancel);
-}
-
-function finishPlanning() {
-  try { screen.orientation.unlock(); } catch (e) {}
-  state.evening.order    = [...planOrder];
-  state.evening.planDone = true;
-  save();
-  showRoutine('evening');
-}
+let planDrag = null; // unused placeholder for backwards compat
 
 // ── DRAG & DROP ──────────────────────────────────────────────────
 
@@ -1122,26 +934,23 @@ function toggleChoice(id) {
   if (idx === -1) arr.push(id);
   else arr.splice(idx, 1);
   state.disabledChoices = arr;
+  // Wenn die aktive Wahlaufgabe deaktiviert wurde, zurücksetzen
+  if (state.evening.choiceId === id && arr.includes(id)) {
+    state.evening.completed = state.evening.completed.filter(x => x !== id);
+    state.evening.choiceId = null;
+  }
   syncOrder('evening');
   save();
   openSettings();
 }
 
-function replan() {
-  closeSettings();
-  state.evening.planDone  = false;
-  state.evening.order     = null;
-  state.evening.completed = [];
-  save();
-  showPlan('evening');
-}
-
 function resetEvening() {
   closeSettings();
-  state.evening.completed  = [];
-  state.evening.globalStart = null;
+  state.evening.completed   = [];
+  state.evening.globalStart = Date.now();
+  state.evening.choiceId    = null;
   save();
-  if (currentMode === 'evening') renderRoutine();
+  if (currentMode === 'evening') { renderRoutine(); updateTimeDisplay(); }
 }
 
 function toggleSunscreen() {
