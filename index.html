@@ -579,7 +579,7 @@ function renderRow(t, ms) {
 
   const checkInner = done ? '✅' : '✓';
   const checkBtn = done
-    ? `<div class="btn-check">✅</div>`
+    ? `<button class="btn-check" onclick="unfinishTask('${t.id}')">✅</button>`
     : `<button class="btn-check" onclick="finishTask('${t.id}')">✓</button>`;
 
   return `<div class="${rowCls}" data-id="${t.id}"${isLast ? ' data-last="true"' : ''}>
@@ -639,6 +639,14 @@ function finishTask(id) {
     renderRoutine();
     updateTimeDisplay();
   }, 320);
+}
+
+function unfinishTask(id) {
+  const ms = state[currentMode];
+  ms.completed = ms.completed.filter(x => x !== id);
+  save();
+  renderRoutine();
+  updateTimeDisplay();
 }
 
 // ── PLAN SCREEN ──────────────────────────────────────────────────
