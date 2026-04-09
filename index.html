@@ -786,9 +786,22 @@ function removeFromTimeline(taskId) {
 }
 
 function insertIntoTimeline(taskId, beforeIndex) {
+  const choiceIds = TASKS['evening'].choice.map(t => t.id);
+  const isChoice  = choiceIds.includes(taskId);
+
   // Remove if already present (reorder)
   const existing = planOrder.indexOf(taskId);
   if (existing !== -1) planOrder.splice(existing, 1);
+
+  // Nur eine Wahlaufgabe erlaubt — andere rauswerfen
+  if (isChoice) {
+    choiceIds.forEach(id => {
+      if (id !== taskId) {
+        const idx = planOrder.indexOf(id);
+        if (idx !== -1) planOrder.splice(idx, 1);
+      }
+    });
+  }
 
   let insertAt = beforeIndex;
   if (existing !== -1 && existing < beforeIndex) insertAt--;
