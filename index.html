@@ -414,7 +414,7 @@ const TASKS = {
     ],
   },
   evening: {
-    deadline: { h:21, m:0 },
+    deadline: { h:20, m:30 },
     mandatory: [
       { id:'feet',   emoji:'🦶', label:'Füße waschen',         duration:5 },
       { id:'warts',  emoji:'🩹', label:'Warzenversorgung',      duration:5 },
@@ -725,7 +725,7 @@ function renderMorningTimeDisplay(container) {
 function renderEveningBudgetBar(container) {
   const ms        = state.evening;
   const mandatory = visibleMandatory('evening');
-  const deadline  = new Date(); deadline.setHours(21, 0, 0, 0);
+  const deadline  = new Date(); deadline.setHours(20, 30, 0, 0);
   const start     = ms.globalStart ? new Date(ms.globalStart) : new Date();
   const totalWin  = Math.max(1, (deadline - start) / 60000);
   const elapsed   = Math.min((Date.now() - start) / 60000, totalWin); // tatsächlich vergangene Zeit
@@ -753,7 +753,7 @@ function renderEveningBudgetBar(container) {
       <div class="budget-seg budget-choice"    style="width:${pChoice}%"></div>
     </div>
     <div class="budget-labels">
-      <span>Schlafenszeit 21:00</span>
+      <span>Schlafenszeit 20:30</span>
       <span>noch ${remaining}</span>
     </div>`;
 }
