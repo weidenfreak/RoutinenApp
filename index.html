@@ -105,16 +105,16 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 .budget-labels { display:flex; justify-content:space-between; font-size:.85rem; font-weight:700; color:var(--muted); margin-top:5px; }
 
 /* ══ CHOICE SECTION ══ */
-.choice-section { background:linear-gradient(135deg,#B5A8D5,#9A8BC4); border-radius:var(--r-md); box-shadow:var(--sh-s); padding:16px; }
-.choice-section-label { font-size:.72rem; font-weight:700; color:rgba(255,255,255,.8); text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px; }
+.choice-section { background:linear-gradient(135deg,#C3B8E8,#A090D0); border-radius:var(--r-md); box-shadow:var(--sh-s); padding:16px; }
+.choice-section-label { font-size:.72rem; font-weight:700; color:rgba(0,0,0,.5); text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px; }
 .choice-chips { display:flex; flex-wrap:wrap; gap:8px; }
-.choice-chip { padding:14px 18px; border-radius:var(--r-sm); border:2px solid rgba(255,255,255,.35); background:rgba(255,255,255,.2); font-size:1rem; font-weight:700; cursor:pointer; transition:all .15s; color:#fff; }
-.choice-chip.active { background:rgba(255,255,255,.45); border-color:#fff; }
+.choice-chip { padding:14px 18px; border-radius:var(--r-sm); border:2px solid rgba(0,0,0,.12); background:rgba(255,255,255,.45); font-size:1rem; font-weight:700; cursor:pointer; transition:all .15s; color:#1A1040; }
+.choice-chip.active { background:rgba(255,255,255,.7); border-color:rgba(0,0,0,.2); }
 .choice-chip:active { transform:scale(.95); }
 .choice-swap-row { display:flex; gap:8px; padding:6px 58px 4px; flex-wrap:wrap; }
-.choice-swap-btn { padding:8px 16px; border-radius:20px; border:1.5px solid rgba(255,255,255,.4); background:rgba(255,255,255,.2); font-size:.9rem; cursor:pointer; color:#fff; font-weight:600; }
-.choice-swap-btn:active { background:rgba(255,255,255,.35); }
-.task-tag.choice-tag { background:rgba(255,255,255,.3); color:#fff; }
+.choice-swap-btn { padding:8px 16px; border-radius:20px; border:1.5px solid rgba(0,0,0,.15); background:rgba(255,255,255,.4); font-size:.9rem; cursor:pointer; color:#1A1040; font-weight:600; }
+.choice-swap-btn:active { background:rgba(255,255,255,.6); }
+.task-tag.choice-tag { background:rgba(0,0,0,.1); color:rgba(0,0,0,.6); }
 
 /* ══ ROUTINE BODY ══ */
 .routine-body { padding:16px; display:flex; flex-direction:column; gap:10px; flex:1; }
@@ -132,16 +132,16 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   overflow:hidden;
 }
 .task-row.done {
-  opacity:.45;
-  background:linear-gradient(135deg,#A8D5B5,#6BB88A);
+  opacity:.5;
+  background:linear-gradient(135deg,#A8D5B5,#80C49A);
 }
 .task-row[data-choice="true"]:not(.done) {
-  background:linear-gradient(135deg,#B5A8D5,#9A8BC4);
+  background:linear-gradient(135deg,#C3B8E8,#A090D0);
 }
 .task-row[data-choice="true"].done {
-  background:linear-gradient(135deg,#A8D5B5,#6BB88A);
+  background:linear-gradient(135deg,#A8D5B5,#80C49A);
 }
-.task-row.last-step { border-color:rgba(255,255,255,.5); }
+.task-row.last-step { border-color:rgba(0,0,0,.12); }
 .task-row.dragging {
   opacity:.55; transform:scale(.98);
   box-shadow:0 8px 24px rgba(0,0,0,.18);
@@ -151,7 +151,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 .drag-handle {
   width:56px; min-height:80px; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
-  font-size:1.4rem; color:rgba(255,255,255,.5); cursor:grab;
+  font-size:1.4rem; color:rgba(0,0,0,.25); cursor:grab;
   touch-action:none;
   user-select:none;
 }
@@ -160,20 +160,21 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 
 .task-content { flex:1; padding:14px 4px; min-width:0; }
 .task-emoji-big { font-size:clamp(2rem,7vw,2.6rem); line-height:1; }
-.task-name { font-size:clamp(.88rem,2.6vw,1.05rem); font-weight:700; margin-top:4px; line-height:1.25; color:#fff; }
-.task-dur  { font-size:.75rem; color:rgba(255,255,255,.75); margin-top:2px; }
-.task-tag  { display:inline-block; font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:20px; margin-top:3px; background:rgba(255,255,255,.3); color:#fff; }
+.task-name { font-size:clamp(.88rem,2.6vw,1.05rem); font-weight:700; margin-top:4px; line-height:1.25; color:#1A3030; }
+.task-row[data-choice="true"] .task-name { color:#1A1040; }
+.task-row.done .task-name { color:#1A3820; }
+.task-dur  { font-size:.75rem; color:rgba(0,0,0,.5); margin-top:2px; }
+.task-tag  { display:inline-block; font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:20px; margin-top:3px; background:rgba(0,0,0,.1); color:rgba(0,0,0,.6); }
 
 .btn-check {
   width:72px; height:72px; margin:4px 8px 4px 4px; flex-shrink:0;
-  border-radius:50%; border:3px solid rgba(255,255,255,.5);
-  background:rgba(255,255,255,.25); font-size:1.8rem; cursor:pointer;
+  border-radius:50%; border:3px solid rgba(0,0,0,.15);
+  background:rgba(255,255,255,.45); font-size:1.8rem; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
-  transition:all .15s; color:#fff; font-weight:700;
+  transition:all .15s; font-weight:700;
 }
-.btn-check:active { transform:scale(.9); background:rgba(255,255,255,.5); }
-.task-row.done .btn-check { background:rgba(255,255,255,.35); border-color:rgba(255,255,255,.4); }
-.task-row.done .btn-check { background:var(--green); border-color:var(--green); font-size:1.6rem; }
+.btn-check:active { transform:scale(.9); background:rgba(255,255,255,.7); }
+.task-row.done .btn-check { background:rgba(255,255,255,.5); border-color:rgba(0,0,0,.1); font-size:1.6rem; }
 
 /* ══ CHECK PULSE ANIM ══ */
 @keyframes checkPulse {
