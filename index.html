@@ -688,13 +688,17 @@ function renderChoicePicker(available) {
 
 function selectChoice(id) {
   const ms = state.evening;
+  if (!ms.order) ms.order = getDefaultOrder('evening');
+  ms.completed = ms.completed.filter(x => x !== ms.choiceId);
   if (ms.choiceId) {
-    ms.completed = ms.completed.filter(x => x !== ms.choiceId);
-    ms.order = (ms.order || []).filter(x => x !== ms.choiceId);
+    // Alte ID an gleicher Position ersetzen
+    const pos = ms.order.indexOf(ms.choiceId);
+    if (pos !== -1) ms.order[pos] = id;
+    else ms.order.push(id);
+  } else {
+    ms.order.push(id);
   }
   ms.choiceId = id;
-  if (!ms.order) ms.order = getDefaultOrder('evening');
-  ms.order.push(id);
   save();
   renderRoutine();
   updateTimeDisplay();
