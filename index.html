@@ -665,7 +665,7 @@ function renderChoiceRow(task, ms, available) {
   }</div>` : '';
 
   return `<div class="task-row${done ? ' done' : ''}" data-id="${task.id}" data-choice="true" style="min-height:${h}px">
-  <div class="drag-handle">⠿</div>
+  <div class="drag-handle" style="visibility:hidden">⠿</div>
   <div class="task-content">
     <div class="task-emoji-big">${task.emoji}</div>
     <div class="task-name">${task.label}</div>
@@ -691,14 +691,9 @@ function selectChoice(id) {
   const ms = state.evening;
   if (!ms.order) ms.order = getDefaultOrder('evening');
   ms.completed = ms.completed.filter(x => x !== ms.choiceId);
-  if (ms.choiceId) {
-    // Alte ID an gleicher Position ersetzen
-    const pos = ms.order.indexOf(ms.choiceId);
-    if (pos !== -1) ms.order[pos] = id;
-    else ms.order.push(id);
-  } else {
-    ms.order.push(id);
-  }
+  // Alte Wahlaufgabe aus order entfernen, neue ans Ende
+  ms.order = ms.order.filter(x => x !== ms.choiceId);
+  ms.order.push(id);
   ms.choiceId = id;
   save();
   renderRoutine();
@@ -816,30 +811,11 @@ function onDragMove(e) {
   e.preventDefault();
   const { listEl, el } = dragState;
   const y = e.clientY;
-  const isChoice = el.dataset.choice === 'true';
 
-  if (isChoice) {
-    // Wahlaufgabe darf nur ganz oben oder ganz unten landen
-    const mandatoryRows = [...listEl.querySelectorAll('.task-row:not(.dragging):not([data-choice])')];
-    const firstMandatory = mandatoryRows[0];
-    if (firstMandatory) {
-      const rect = firstMandatory.getBoundingClientRect();
-      if (y < rect.top + rect.height / 2) {
-        listEl.insertBefore(el, firstMandatory);
-      } else {
-        listEl.appendChild(el);
-      }
-    } else {
-      listEl.appendChild(el);
-    }
-    return;
-  }
-
-  // Pflichtaufgaben: normal sortierbar, aber nicht hinter die Wahlaufgabe wenn sie oben ist
   const choiceRow = listEl.querySelector('.task-row[data-choice]:not(.dragging)');
-  const siblings = [...listEl.querySelectorAll('.task-row:not(.dragging):not([data-choice])')]
+  const siblings  = [...listEl.querySelectorAll('.task-row:not(.dragging):not([data-choice])')]
     .filter(r => r.dataset.last !== 'true');
-  const lastRow = listEl.querySelector('.task-row[data-last="true"]');
+  const lastRow   = listEl.querySelector('.task-row[data-last="true"]');
 
   let insertBefore = null;
   for (const r of siblings) {
@@ -884,7 +860,7 @@ function initDrag(listEl) {
     const handle = e.target.closest('.drag-handle');
     if (!handle) return;
     const row = handle.closest('.task-row');
-    if (!row || row.dataset.last === 'true' || row.classList.contains('done')) return;
+    if (!row || row.dataset.last === 'true' || row.dataset.choice === 'true' || row.classList.contains('done')) return;
 
     e.preventDefault();
     row.classList.add('dragging');
