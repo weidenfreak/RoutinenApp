@@ -149,7 +149,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 }
 
 .drag-handle {
-  width:56px; min-height:80px; flex-shrink:0;
+  width:56px; align-self:stretch; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
   font-size:1.4rem; color:rgba(0,0,0,.25); cursor:grab;
   touch-action:none;
@@ -613,9 +613,14 @@ function renderRoutine() {
   initDrag(list);
 }
 
+function taskRowHeight(duration) {
+  return Math.max(80, duration * 8 + 50);
+}
+
 function renderRow(t, ms) {
   const done   = ms.completed.includes(t.id);
   const isLast = !!t.isLast;
+  const h      = taskRowHeight(t.duration);
 
   let rowCls = 'task-row';
   if (done)   rowCls += ' done';
@@ -634,7 +639,7 @@ function renderRow(t, ms) {
     ? `<button class="btn-check" onclick="unfinishTask('${t.id}')">✅</button>`
     : `<button class="btn-check" onclick="finishTask('${t.id}')">✓</button>`;
 
-  return `<div class="${rowCls}" data-id="${t.id}"${isLast ? ' data-last="true"' : ''}>
+  return `<div class="${rowCls}" data-id="${t.id}"${isLast ? ' data-last="true"' : ''} style="min-height:${h}px">
   <div class="drag-handle">⠿</div>${content}${checkBtn}
 </div>`;
 }
@@ -665,7 +670,8 @@ function renderChoiceSection(ms) {
     ).join('')
   }</div>` : '';
 
-  return `<div class="task-row${done ? ' done' : ''}" data-id="${task.id}" data-choice="true">
+  const h = taskRowHeight(task.duration);
+  return `<div class="task-row${done ? ' done' : ''}" data-id="${task.id}" data-choice="true" style="min-height:${h}px">
     <div class="drag-handle" style="visibility:hidden"></div>
     <div class="task-content">
       <div class="task-emoji-big">${task.emoji}</div>
