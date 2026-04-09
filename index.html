@@ -1149,6 +1149,7 @@ function toggleSunscreen() {
   const cancel = () => { clearTimeout(timer); timer = null; };
   btn.addEventListener('pointerdown', start);
   ['pointerup','pointercancel','pointerleave'].forEach(e => btn.addEventListener(e, cancel));
+  btn.addEventListener('dblclick', () => { cancel(); openSettings(); });
 })();
 
 // ── WEATHER ──────────────────────────────────────────────────────
