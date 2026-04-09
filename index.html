@@ -741,15 +741,12 @@ function renderEveningBudgetBar(container) {
   const remainMandDur = mandatory
     .filter(t => !ms.completed.includes(t.id))
     .reduce((sum, t) => sum + t.duration, 0);
-  const choiceTask = ms.choiceId ? TASKS.evening.choice.find(t => t.id === ms.choiceId) : null;
-  const choiceDur  = (choiceTask && !ms.completed.includes(ms.choiceId)) ? choiceTask.duration : 0;
-  const bufferDur  = Math.max(0, timeLeft - remainMandDur - choiceDur);
+  // Freie Zeit geht komplett zur Wahlaufgabe
+  const choiceDur = Math.max(0, timeLeft - remainMandDur);
 
-  // Segmente als Anteil am Gesamtfenster
   const pElapsed = (elapsed       / totalWin * 100).toFixed(1);
   const pMand    = (remainMandDur / totalWin * 100).toFixed(1);
   const pChoice  = (choiceDur     / totalWin * 100).toFixed(1);
-  const pBuf     = (bufferDur     / totalWin * 100).toFixed(1);
 
   const nowMin = timeLeft;
   const h = Math.floor(nowMin / 60);
@@ -761,7 +758,6 @@ function renderEveningBudgetBar(container) {
       <div class="budget-seg budget-done"      style="width:${pElapsed}%"></div>
       <div class="budget-seg budget-mandatory" style="width:${pMand}%"></div>
       <div class="budget-seg budget-choice"    style="width:${pChoice}%"></div>
-      <div class="budget-seg budget-buffer"    style="width:${pBuf}%"></div>
     </div>
     <div class="budget-labels">
       <span>Schlafenszeit 21:00</span>
