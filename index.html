@@ -591,25 +591,31 @@ function renderRoutine() {
   const list = document.getElementById('task-list');
   const order = ms.order || getDefaultOrder(mode);
 
-  // Nur Pflichtaufgaben in der sortierbaren Liste
-  const mandatory = visibleMandatory(mode);
-  let html = order
-    .filter(id => mandatory.some(t => t.id === id))
-    .map(id => {
-      const t = mandatory.find(x => x.id === id);
-      return t ? renderRow(t, ms) : '';
+  if (mode === 'evening') {
+    const mandatory  = visibleMandatory('evening');
+    const choiceTask = ms.choiceId ? TASKS.evening.choice.find(t => t.id === ms.choiceId) : null;
+    const available  = TASKS.evening.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+
+    let html = order.map(id => {
+      const mand = mandatory.find(t => t.id === id);
+      if (mand) return renderRow(mand, ms);
+      if (choiceTask && id === choiceTask.id) return renderChoiceRow(choiceTask, ms, available);
+      return '';
     }).join('');
 
-  // Wahlaufgaben-Sektion für Abend
-  if (mode === 'evening') {
-    html += renderChoiceSection(ms);
+    // Kein Wahl noch gewählt → Picker am Ende
+    if (!ms.choiceId) {
+      html += renderChoicePicker(available);
+    }
+
+    list.innerHTML = html;
   } else {
-    // Morgen: Wahlaufgaben auch rendern (in order enthalten)
-    const choiceTasks = getAllTasks(mode).filter(t => TASKS[mode].choice.some(c => c.id === t.id));
-    html += choiceTasks.map(t => renderRow(t, ms)).join('');
+    list.innerHTML = order.map(id => {
+      const t = getAllTasks(mode).find(x => x.id === id);
+      return t ? renderRow(t, ms) : '';
+    }).join('');
   }
 
-  list.innerHTML = html;
   initDrag(list);
 }
 
@@ -644,51 +650,51 @@ function renderRow(t, ms) {
 </div>`;
 }
 
-function renderChoiceSection(ms) {
-  const available = TASKS.evening.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
-
-  if (!ms.choiceId) {
-    const chips = available.map(t =>
-      `<button class="choice-chip" onclick="selectChoice('${t.id}')">${t.emoji} ${t.label} · ${t.duration} min</button>`
-    ).join('');
-    return `<div class="choice-section">
-      <div class="choice-section-label">Wahlaufgabe</div>
-      <div class="choice-chips">${chips}</div>
-    </div>`;
-  }
-
-  const task = TASKS.evening.choice.find(t => t.id === ms.choiceId);
-  const done = ms.completed.includes(ms.choiceId);
+function renderChoiceRow(task, ms, available) {
+  const done = ms.completed.includes(task.id);
+  const h    = taskRowHeight(task.duration);
 
   const checkBtn = done
-    ? `<button class="btn-check" onclick="unfinishTask('${ms.choiceId}')">✅</button>`
-    : `<button class="btn-check" onclick="finishTask('${ms.choiceId}')">✓</button>`;
+    ? `<button class="btn-check" onclick="unfinishTask('${task.id}')">✅</button>`
+    : `<button class="btn-check" onclick="finishTask('${task.id}')">✓</button>`;
 
   const swapRow = !done ? `<div class="choice-swap-row">${
-    available.filter(t => t.id !== ms.choiceId).map(t =>
+    available.filter(t => t.id !== task.id).map(t =>
       `<button class="choice-swap-btn" onclick="selectChoice('${t.id}')">${t.emoji} ${t.label}</button>`
     ).join('')
   }</div>` : '';
 
-  const h = taskRowHeight(task.duration);
   return `<div class="task-row${done ? ' done' : ''}" data-id="${task.id}" data-choice="true" style="min-height:${h}px">
-    <div class="drag-handle" style="visibility:hidden"></div>
-    <div class="task-content">
-      <div class="task-emoji-big">${task.emoji}</div>
-      <div class="task-name">${task.label}</div>
-      <div class="task-dur">${task.duration}&nbsp;min</div>
-      <span class="task-tag choice-tag">Wahlaufgabe</span>
-    </div>
-    ${checkBtn}
-  </div>${swapRow}`;
+  <div class="drag-handle">⠿</div>
+  <div class="task-content">
+    <div class="task-emoji-big">${task.emoji}</div>
+    <div class="task-name">${task.label}</div>
+    <div class="task-dur">${task.duration}&nbsp;min</div>
+    <span class="task-tag choice-tag">Wahlaufgabe</span>
+  </div>
+  ${checkBtn}
+</div>${swapRow}`;
+}
+
+function renderChoicePicker(available) {
+  const chips = available.map(t =>
+    `<button class="choice-chip" onclick="selectChoice('${t.id}')">${t.emoji} ${t.label} · ${t.duration} min</button>`
+  ).join('');
+  return `<div class="choice-section">
+    <div class="choice-section-label">Wahlaufgabe</div>
+    <div class="choice-chips">${chips}</div>
+  </div>`;
 }
 
 function selectChoice(id) {
-  // Alte Wahlaufgabe aus completed entfernen falls vorhanden
-  if (state.evening.choiceId) {
-    state.evening.completed = state.evening.completed.filter(x => x !== state.evening.choiceId);
+  const ms = state.evening;
+  if (ms.choiceId) {
+    ms.completed = ms.completed.filter(x => x !== ms.choiceId);
+    ms.order = (ms.order || []).filter(x => x !== ms.choiceId);
   }
-  state.evening.choiceId = id;
+  ms.choiceId = id;
+  if (!ms.order) ms.order = getDefaultOrder('evening');
+  ms.order.push(id);
   save();
   renderRoutine();
   updateTimeDisplay();
@@ -967,6 +973,7 @@ function resetEvening() {
   state.evening.completed   = [];
   state.evening.globalStart = Date.now();
   state.evening.choiceId    = null;
+  state.evening.order       = getDefaultOrder('evening');
   save();
   if (currentMode === 'evening') { renderRoutine(); updateTimeDisplay(); }
 }
