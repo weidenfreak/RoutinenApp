@@ -259,16 +259,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 }
 #overlay-choice-pick.hidden { display:none; }
 
-/* ══ FREE TIME PICK OVERLAY ══ */
-#overlay-free-time-pick {
-  position:fixed; inset:0;
-  background:linear-gradient(160deg,#FFF5B6,#D4F590);
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  z-index:100; padding:24px 20px;
-  animation:fadeIn .4s ease;
-}
-#overlay-free-time-pick.hidden { display:none; }
+
 .choice-pick-inner { display:flex; flex-direction:column; align-items:center; gap:18px; width:100%; max-width:420px; }
 .choice-pick-fox   { width:min(110px,28vw); animation:foxBounce 1.1s ease-in-out infinite; }
 .choice-pick-title { font-size:clamp(2rem,7vw,3rem); font-weight:800; text-align:center; }
@@ -519,15 +510,6 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
   </div>
 </div>
 
-<!-- ══ FREE TIME PICK OVERLAY ══ -->
-<div id="overlay-free-time-pick" class="hidden" onclick="closeFreeTimePick(event)">
-  <div class="choice-pick-inner" onclick="event.stopPropagation()">
-    <div class="choice-pick-fox" id="free-time-pick-fox"></div>
-    <div class="choice-pick-title">⭐ Freie Zeit! ⭐</div>
-    <div class="choice-pick-label">Was möchtest du 5 Minuten machen?</div>
-    <div class="choice-pick-options" id="free-time-pick-options"></div>
-  </div>
-</div>
 
 <!-- ══ COMPLETION OVERLAY ══ -->
 <div id="overlay-completion" class="hidden" onclick="hideCompletion()">
@@ -639,10 +621,13 @@ const TASKS = {
       { id:'hair',      emoji:'🪮', label:'Haare kämmen',           duration:2 },
       { id:'dress',     emoji:'👕', label:'Anziehen',               duration:5 },
       { id:'sunscreen', emoji:'☀️', label:'Sonnencreme',            duration:5, conditional:true },
-      { id:'free-time', emoji:'⭐', label:'Freie Zeit',             duration:5, isPicker:true },
       { id:'go',        emoji:'🥾', label:'Jacke + Schuhe + Los!', duration:10, isLast:true },
     ],
-    choice: [],
+    choice: [
+      { id:'cookie', emoji:'🍪', label:'Keks essen', duration:5 },
+      { id:'play',   emoji:'🎮', label:'Spielen',    duration:5 },
+      { id:'book',   emoji:'📖', label:'Buch lesen', duration:5 },
+    ],
   },
   evening: {
     deadline: { h:20, m:30 },
@@ -665,16 +650,10 @@ const TASKS = {
   },
 };
 
-const FREE_TIME_OPTIONS = [
-  { id:'cookie', emoji:'🍪', label:'Keks essen' },
-  { id:'play',   emoji:'🎮', label:'Spielen'    },
-  { id:'book',   emoji:'📖', label:'Buch lesen' },
-];
-
 // ── STATE ────────────────────────────────────────────────────────
 
 function newRoutine() {
-  return { date:null, order:null, completed:[], globalStart:null, choiceId:null, freeTimeChoice:null };
+  return { date:null, order:null, completed:[], globalStart:null, choiceId:null };
 }
 
 function defaults() {
@@ -732,13 +711,14 @@ function getDefaultOrder(mode) {
   const nonLast = mand.filter(t => !t.isLast);
   const last    = mand.find(t => t.isLast);
   if (mode === 'morning') {
-    const choice = TASKS[mode].choice;
-    const ids    = [...nonLast.map(t => t.id), ...choice.map(t => t.id)];
+    // Choices nicht im Standard-Order; sie werden per selectChoice eingefügt
+    const ids = nonLast.map(t => t.id);
     if (last) ids.push(last.id);
     return ids;
   }
-  // Abend: nur Pflichtaufgaben (Wahlaufgabe separat via choiceId)
-  const ids = nonLast.map(t => t.id);
+  // Abend: alle Wahlaufgaben in der Standardreihenfolge (via choiceId gerendert)
+  const choice = TASKS[mode].choice;
+  const ids    = [...nonLast.map(t => t.id), ...choice.map(t => t.id)];
   if (last) ids.push(last.id);
   return ids;
 }
@@ -803,6 +783,12 @@ function allMandatoryDone(mode) {
   return visibleMandatory(mode).every(t => state[mode].completed.includes(t.id));
 }
 
+function allPreGoMandatoryDone(mode) {
+  return visibleMandatory(mode)
+    .filter(t => !t.isLast)
+    .every(t => state[mode].completed.includes(t.id));
+}
+
 // ── NAVIGATION ───────────────────────────────────────────────────
 
 let currentMode = null;
@@ -824,10 +810,6 @@ function showHome() {
 function showRoutine(mode) {
   currentMode = mode;
   resetDaily();
-  // Migration: reset order if free-time is missing (stale state from before that task existed)
-  if (mode === 'morning' && state.morning.order && !state.morning.order.includes('free-time')) {
-    state.morning.order = null;
-  }
   if (!state[mode].order) { state[mode].order = getDefaultOrder(mode); }
   syncOrder(mode);
   save();
@@ -868,12 +850,24 @@ function renderRoutine() {
 
     list.innerHTML = html;
   } else {
-    list.innerHTML = order.map(id => {
-      const t = getAllTasks(mode).find(x => x.id === id);
-      if (!t) return '';
-      if (t.isPicker) return renderPickerRow(t, ms);
-      return renderRow(t, ms);
-    }).join('');
+    // Morgen: Pflichtaufgaben (non-last) → Wahlaufgabe → go
+    const mandatory  = visibleMandatory('morning');
+    const nonLast    = mandatory.filter(t => !t.isLast);
+    const lastTask   = mandatory.find(t => t.isLast);
+    const choiceTask = ms.choiceId ? TASKS.morning.choice.find(t => t.id === ms.choiceId) : null;
+    const available  = TASKS.morning.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+
+    let html = order
+      .filter(id => nonLast.some(t => t.id === id))
+      .map(id => renderRow(nonLast.find(t => t.id === id), ms))
+      .join('');
+
+    if (choiceTask) html += renderMorningChoiceRow(choiceTask, ms, available);
+    else            html += renderChoicePicker(available);
+
+    if (lastTask) html += renderRow(lastTask, ms);
+
+    list.innerHTML = html;
   }
 
   initDrag(list);
@@ -949,79 +943,63 @@ function renderChoicePicker(available) {
   </div>`;
 }
 
-function renderPickerRow(t, ms) {
-  const done   = ms.completed.includes(t.id);
-  const choice = FREE_TIME_OPTIONS.find(o => o.id === ms.freeTimeChoice);
-  const h      = taskRowHeight(t.duration);
-
-  const emoji = choice ? choice.emoji : t.emoji;
-  const label = choice ? choice.label : t.label;
-
-  const rowCls = 'task-row' + (done ? ' done' : '');
-  const tag = `<span class="task-tag choice-tag">Wahlaufgabe</span>`;
-
-  const content = `<div class="task-content">
-    <div class="task-emoji-big">${emoji}</div>
+function renderMorningChoiceRow(task, ms, available) {
+  const done = ms.completed.includes(task.id);
+  const h    = 300;
+  const swapChips = !done ? `<div class="choice-swap-row">${
+    available.filter(t => t.id !== task.id).map(t =>
+      `<button class="choice-swap-btn" onclick="selectChoice('${t.id}')">${t.emoji} ${t.label}</button>`
+    ).join('')
+  }</div>` : '';
+  const checkBtn = done
+    ? `<button class="btn-check" onclick="unfinishTask('${task.id}')">✅</button>`
+    : `<button class="btn-check" onclick="finishTask('${task.id}')">✓</button>`;
+  return `<div class="task-row${done ? ' done' : ''}" data-id="${task.id}" data-choice="true" style="min-height:${h}px">
+  <div class="drag-handle" style="visibility:hidden">⠿</div>
+  <div class="task-content">
+    <div class="task-emoji-big">${task.emoji}</div>
     <div class="task-text-group">
-      <div class="task-name">${label}</div>
-      <div class="task-dur">${t.duration}&nbsp;min</div>
-      ${tag}
+      <div class="task-name">${task.label}</div>
+      <div class="task-dur">${task.duration}&nbsp;min</div>
+      <span class="task-tag choice-tag">Freie Zeit</span>
+      ${swapChips}
     </div>
-  </div>`;
-
-  let actionBtn;
-  if (done) {
-    actionBtn = `<button class="btn-check" onclick="unfinishTask('${t.id}')">✅</button>`;
-  } else if (choice) {
-    actionBtn = `<button class="btn-check" onclick="finishTask('${t.id}')">✓</button>`;
-  } else {
-    actionBtn = `<button class="btn-check" onclick="showFreeTimePick()" style="font-size:1.6rem">⭐</button>`;
-  }
-
-  const tapHint = !choice && !done
-    ? `<div onclick="showFreeTimePick()" style="position:absolute;inset:0;cursor:pointer"></div>`
-    : '';
-
-  return `<div class="${rowCls}" data-id="${t.id}" data-choice="true" style="min-height:${h}px;position:relative">
-  <div class="drag-handle" style="visibility:hidden">⠿</div>${content}${actionBtn}${tapHint}
+  </div>
+  ${checkBtn}
 </div>`;
 }
 
-function showFreeTimePick() {
-  const overlay = document.getElementById('overlay-free-time-pick');
-  document.getElementById('free-time-pick-fox').innerHTML = typeof BUDDY_SVG !== 'undefined' ? BUDDY_SVG : '⭐';
-  document.getElementById('free-time-pick-options').innerHTML = FREE_TIME_OPTIONS.map(o =>
-    `<button class="choice-pick-btn" onclick="confirmFreeTimeChoice('${o.id}')">
-      <span class="choice-pick-emoji">${o.emoji}</span>
-      <span class="choice-pick-name">${o.label}</span>
-    </button>`
-  ).join('');
-  overlay.classList.remove('hidden');
-  parseEmoji(overlay);
-}
-
-function closeFreeTimePick(e) {
-  document.getElementById('overlay-free-time-pick').classList.add('hidden');
-}
-
-function confirmFreeTimeChoice(id) {
-  document.getElementById('overlay-free-time-pick').classList.add('hidden');
-  state.morning.freeTimeChoice = id;
-  save();
-  renderRoutine();
-}
-
 function selectChoice(id) {
-  const ms = state.evening;
-  if (!ms.order) ms.order = getDefaultOrder('evening');
+  const ms = state[currentMode];
+  if (!ms.order) ms.order = getDefaultOrder(currentMode);
   ms.completed = ms.completed.filter(x => x !== ms.choiceId);
-  // Alte Wahlaufgabe aus order entfernen, neue ans Ende
-  ms.order = ms.order.filter(x => x !== ms.choiceId);
-  ms.order.push(id);
+  // Alle Wahlaufgaben aus order entfernen, dann gewählte einfügen
+  const choiceIds = TASKS[currentMode].choice.map(t => t.id);
+  ms.order = ms.order.filter(x => !choiceIds.includes(x));
+  // Morgen: vor isLast einfügen; Abend: ans Ende
+  const lastId  = TASKS[currentMode].mandatory.find(t => t.isLast)?.id;
+  const lastIdx = lastId ? ms.order.indexOf(lastId) : -1;
+  if (lastIdx >= 0) ms.order.splice(lastIdx, 0, id);
+  else              ms.order.push(id);
   ms.choiceId = id;
   save();
   renderRoutine();
   updateTimeDisplay();
+}
+
+function showMorningChoicePick() {
+  const available = TASKS.morning.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+  if (!available.length) return;
+  document.getElementById('choice-pick-fox').innerHTML = BUDDY_SVG;
+  document.getElementById('choice-pick-options').innerHTML = available.map(t =>
+    `<button class="choice-pick-btn" onclick="confirmChoice('${t.id}')">
+      <span class="choice-pick-emoji">${t.emoji}</span>
+      <span class="choice-pick-name">${t.label}</span>
+    </button>`
+  ).join('');
+  const overlay = document.getElementById('overlay-choice-pick');
+  overlay.classList.remove('hidden');
+  parseEmoji(overlay);
 }
 
 // ── TIME DISPLAY ─────────────────────────────────────────────────
@@ -1184,12 +1162,17 @@ function finishTask(id) {
   const remaining = visibleMandatory(mode).filter(t => !ms.completed.includes(t.id)).length;
   foxReact(remaining);
 
-  if (allMandatoryDone(mode)) {
-    if (mode === 'evening') {
-      setTimeout(() => { renderRoutine(); showBedtime(); }, 400);
-    } else {
+  if (mode === 'morning') {
+    if (allMandatoryDone('morning')) {
       setTimeout(() => showCompletion(), 400);
+      return;
     }
+    if (allPreGoMandatoryDone('morning')) {
+      setTimeout(() => { renderRoutine(); showMorningChoicePick(); }, 400);
+      return;
+    }
+  } else if (allMandatoryDone(mode)) {
+    setTimeout(() => { renderRoutine(); showBedtime(); }, 400);
     return;
   }
 
