@@ -96,22 +96,6 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 /* ══ TIME DISPLAY ══ */
 .time-display { flex:1; }
 
-/* ══ BUDGET BAR (Abend) ══ */
-.budget-wrap { width:100%; padding:0 0 12px; }
-.budget-bar {
-  height:52px; background:#E0E0E0; overflow:hidden; display:flex;
-  box-shadow:inset 0 2px 6px rgba(0,0,0,.10);
-}
-.budget-seg { height:100%; transition:width .8s ease; min-width:0; flex-shrink:0; }
-.budget-done      { background:linear-gradient(180deg,#D4F590,#BEEB6C); }
-.budget-mandatory { background:linear-gradient(180deg,#EEF8FF,#DEF1FF); }
-.budget-choice    { background:linear-gradient(180deg,#FFFBE0,#FFF5B6); }
-.budget-labels {
-  display:flex; justify-content:space-between;
-  font-size:.9rem; font-weight:800; color:#555;
-  padding:6px 14px 0;
-}
-
 /* ══ CHOICE SECTION ══ */
 .choice-section { background:var(--yellow); border-radius:var(--r-md); box-shadow:var(--sh-s); padding:16px; }
 .choice-section-label { font-size:.72rem; font-weight:700; color:rgba(0,0,0,.45); text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px; }
@@ -258,7 +242,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 #morning-activity-emoji.emoji-stage-4 { font-size:4.5rem; }
 
 /* ══ MORNING OPENER OVERLAY ══ */
-#overlay-morning-opener {
+#overlay-opener {
   position:fixed; inset:0;
   background:linear-gradient(160deg,var(--yellow),#C8E6F5);
   display:flex; flex-direction:column;
@@ -266,7 +250,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   z-index:100; padding:24px 20px;
   animation:fadeIn .4s ease;
 }
-#overlay-morning-opener.hidden { display:none; }
+#overlay-opener.hidden { display:none; }
 @keyframes foxWaveOnce {
   0%   { transform:rotate(0deg); }
   20%  { transform:rotate(-12deg) translateY(-4px); }
@@ -541,12 +525,12 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
 
 
 <!-- ══ MORNING OPENER OVERLAY ══ -->
-<div id="overlay-morning-opener" class="hidden">
+<div id="overlay-opener" class="hidden">
   <div class="choice-pick-inner">
-    <div class="choice-pick-fox" id="morning-opener-fox"></div>
+    <div class="choice-pick-fox" id="opener-fox"></div>
     <div class="choice-pick-title">☀️</div>
     <div class="choice-pick-label">Was machen wir heute?</div>
-    <div class="choice-pick-options" id="morning-opener-options"></div>
+    <div class="choice-pick-options" id="opener-options"></div>
   </div>
 </div>
 
@@ -818,8 +802,6 @@ function switchScreen(id) {
 function showHome() {
   clearInterval(timeIv); timeIv = null;
   currentMode = null;
-  const wrap = document.getElementById('budget-wrap');
-  if (wrap) wrap.remove();
   switchScreen('screen-home');
 }
 
@@ -829,18 +811,13 @@ function showRoutine(mode) {
   if (!state[mode].order) { state[mode].order = getDefaultOrder(mode); }
   syncOrder(mode);
   save();
-  // Abend: Startzeit setzen wenn noch nicht gesetzt
-  if (mode === 'evening' && !state.evening.globalStart) {
-    state.evening.globalStart = Date.now();
-    save();
-  }
   renderRoutine();
   switchScreen('screen-routine');
   updateTimeDisplay();
   timeIv = setInterval(updateTimeDisplay, 10000);
   checkWeather();
-  if (mode === 'morning' && !state.morning.choiceId) {
-    setTimeout(() => showMorningOpener(), 300);
+  if (!state[mode].choiceId) {
+    setTimeout(() => showOpener(mode), 300);
   }
 }
 
@@ -1007,20 +984,28 @@ function selectChoice(id) {
   updateTimeDisplay();
 }
 
-function showMorningOpener() {
-  if (state.morning.choiceId) return; // already chosen
-  const available = TASKS.morning.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+function showOpener(mode) {
+  if (state[mode].choiceId) return;
+  const available = TASKS[mode].choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
   if (!available.length) return;
-  const foxContainer = document.getElementById('morning-opener-fox');
+  const overlay = document.getElementById('overlay-opener');
+  const isMorning = mode === 'morning';
+  overlay.style.background = isMorning
+    ? 'linear-gradient(160deg,var(--yellow),#C8E6F5)'
+    : 'linear-gradient(160deg,#7B9FD4,#C3A8D8)';
+  document.querySelector('#overlay-opener .choice-pick-title').textContent = isMorning ? '☀️' : '🌙';
+  document.querySelector('#overlay-opener .choice-pick-label').textContent = isMorning
+    ? 'Was machen wir heute?'
+    : 'Was möchtest du noch machen?';
+  const foxContainer = document.getElementById('opener-fox');
   foxContainer.innerHTML = BUDDY_SVG;
   foxContainer.classList.add('fox-waving');
-  document.getElementById('morning-opener-options').innerHTML = available.map(t =>
+  document.getElementById('opener-options').innerHTML = available.map(t =>
     `<button class="choice-pick-btn" onclick="confirmChoice('${t.id}')">
       <span class="choice-pick-emoji">${t.emoji}</span>
       <span class="choice-pick-name">${t.label}</span>
     </button>`
   ).join('');
-  const overlay = document.getElementById('overlay-morning-opener');
   overlay.classList.remove('hidden');
   parseEmoji(overlay);
 }
@@ -1065,62 +1050,7 @@ function showMorningChoicePick() {
 
 // ── TIME DISPLAY ─────────────────────────────────────────────────
 
-function updateTimeDisplay() {
-  if (!currentMode) return;
-  const container = document.getElementById('time-display');
-  if (!container) return;
-  if (currentMode === 'evening') {
-    renderEveningBudgetBar(container);
-  } else {
-    container.innerHTML = '';
-  }
-}
-
-function renderEveningBudgetBar(container) {
-  const ms        = state.evening;
-  const mandatory = visibleMandatory('evening');
-  const deadline  = new Date(); deadline.setHours(20, 30, 0, 0);
-  const start     = ms.globalStart ? new Date(ms.globalStart) : new Date();
-  const totalWin  = Math.max(1, (deadline - start) / 60000);
-  const elapsed   = Math.min((Date.now() - start) / 60000, totalWin); // tatsächlich vergangene Zeit
-  const timeLeft  = Math.max(0, totalWin - elapsed);
-
-  const remainMandDur = mandatory
-    .filter(t => !ms.completed.includes(t.id))
-    .reduce((sum, t) => sum + t.duration, 0);
-  // Freie Zeit geht komplett zur Wahlaufgabe
-  const choiceDur = Math.max(0, timeLeft - remainMandDur);
-
-  const pElapsed = (elapsed       / totalWin * 100).toFixed(1);
-  const pMand    = (remainMandDur / totalWin * 100).toFixed(1);
-  const pChoice  = (choiceDur     / totalWin * 100).toFixed(1);
-
-  const nowMin = timeLeft;
-  const h = Math.floor(nowMin / 60);
-  const m = Math.round(nowMin % 60);
-  const remaining = h > 0 ? `${h} h ${m} min` : `${Math.round(nowMin)} min`;
-
-  // Balken ins Header-Element einbauen (volle Breite, außerhalb des top-row)
-  const header = document.querySelector('.routine-header');
-  let wrap = document.getElementById('budget-wrap');
-  if (!wrap) {
-    wrap = document.createElement('div');
-    wrap.id = 'budget-wrap';
-    wrap.className = 'budget-wrap';
-    header.appendChild(wrap);
-  }
-  wrap.innerHTML = `
-    <div class="budget-bar">
-      <div class="budget-seg budget-done"      style="width:${pElapsed}%"></div>
-      <div class="budget-seg budget-mandatory" style="width:${pMand}%"></div>
-      <div class="budget-seg budget-choice"    style="width:${pChoice}%"></div>
-    </div>
-    <div class="budget-labels">
-      <span>🌙 Bis zum Schlafen</span>
-      <span>noch ${remaining}</span>
-    </div>`;
-  container.innerHTML = '';
-}
+function updateTimeDisplay() { /* kein Zeitstrahl mehr */ }
 
 // ── FOX BUDDY ─────────────────────────────────────────────────────
 const FOX_EMOJIS = ['⭐','🌟','🎉','👏','💫','✨','🥰','🎊','💛','🌈'];
@@ -1401,7 +1331,7 @@ function closeChoicePick(e) {
 
 function confirmChoice(id) {
   document.getElementById('overlay-choice-pick').classList.add('hidden');
-  document.getElementById('overlay-morning-opener').classList.add('hidden');
+  document.getElementById('overlay-opener').classList.add('hidden');
   selectChoice(id);
   updateMorningActivityEmoji();
 }
@@ -1587,7 +1517,10 @@ function resetMorning() {
   state.morning.choiceId    = null;
   state.morning.order       = getDefaultOrder('morning');
   save();
-  if (currentMode === 'morning') { renderRoutine(); updateTimeDisplay(); }
+  if (currentMode === 'morning') {
+    renderRoutine(); updateTimeDisplay();
+    setTimeout(() => showOpener('morning'), 300);
+  }
 }
 
 function resetEvening() {
@@ -1597,7 +1530,10 @@ function resetEvening() {
   state.evening.choiceId    = null;
   state.evening.order       = getDefaultOrder('evening');
   save();
-  if (currentMode === 'evening') { renderRoutine(); updateTimeDisplay(); }
+  if (currentMode === 'evening') {
+    renderRoutine(); updateTimeDisplay();
+    setTimeout(() => showOpener('evening'), 300);
+  }
 }
 
 function toggleSunscreen() {
