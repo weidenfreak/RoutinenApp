@@ -248,6 +248,38 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   animation:confettiFly var(--cd) ease-out forwards;
 }
 
+/* ══ MORNING ACTIVITY EMOJI ══ */
+#morning-activity-emoji {
+  font-size:1.4rem;
+  transition:font-size 0.4s ease, opacity 0.3s ease;
+  opacity:0;
+  line-height:1;
+  flex-shrink:0;
+}
+#morning-activity-emoji.visible { opacity:1; }
+#morning-activity-emoji.emoji-stage-2 { font-size:2.2rem; }
+#morning-activity-emoji.emoji-stage-3 { font-size:3.2rem; }
+#morning-activity-emoji.emoji-stage-4 { font-size:4.5rem; }
+
+/* ══ MORNING OPENER OVERLAY ══ */
+#overlay-morning-opener {
+  position:fixed; inset:0;
+  background:linear-gradient(160deg,var(--yellow),#C8E6F5);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  z-index:100; padding:24px 20px;
+  animation:fadeIn .4s ease;
+}
+#overlay-morning-opener.hidden { display:none; }
+@keyframes foxWaveOnce {
+  0%   { transform:rotate(0deg); }
+  20%  { transform:rotate(-12deg) translateY(-4px); }
+  50%  { transform:rotate(14deg) translateY(-4px); }
+  80%  { transform:rotate(-8deg) translateY(-2px); }
+  100% { transform:rotate(0deg); }
+}
+.fox-waving { animation:foxWaveOnce 0.6s ease forwards; transform-origin:bottom center; }
+
 /* ══ CHOICE PICK OVERLAY ══ */
 #overlay-choice-pick {
   position:fixed; inset:0;
@@ -493,6 +525,7 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
     <div class="routine-header-top">
       <button class="back-btn" onclick="showHome()">‹</button>
       <div class="time-display" id="time-display"></div>
+      <div id="morning-activity-emoji"></div>
     </div>
   </div>
   <div class="routine-body">
@@ -510,6 +543,16 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
   </div>
 </div>
 
+
+<!-- ══ MORNING OPENER OVERLAY ══ -->
+<div id="overlay-morning-opener" class="hidden">
+  <div class="choice-pick-inner">
+    <div class="choice-pick-fox" id="morning-opener-fox"></div>
+    <div class="choice-pick-title">☀️</div>
+    <div class="choice-pick-label">Was machen wir heute?</div>
+    <div class="choice-pick-options" id="morning-opener-options"></div>
+  </div>
+</div>
 
 <!-- ══ COMPLETION OVERLAY ══ -->
 <div id="overlay-completion" class="hidden" onclick="hideCompletion()">
@@ -814,6 +857,9 @@ function showRoutine(mode) {
   updateTimeDisplay();
   timeIv = setInterval(updateTimeDisplay, 10000);
   checkWeather();
+  if (mode === 'morning' && !state.morning.choiceId) {
+    setTimeout(() => showMorningOpener(), 300);
+  }
 }
 
 // ── RENDER ───────────────────────────────────────────────────────
@@ -859,6 +905,7 @@ function renderRoutine() {
     if (lastTask) html += renderRow(lastTask, ms);
 
     list.innerHTML = html;
+    updateMorningActivityEmoji();
   }
 
   initDrag(list);
@@ -976,6 +1023,47 @@ function selectChoice(id) {
   save();
   renderRoutine();
   updateTimeDisplay();
+}
+
+function showMorningOpener() {
+  if (state.morning.choiceId) return; // already chosen
+  const available = TASKS.morning.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+  if (!available.length) return;
+  const foxContainer = document.getElementById('morning-opener-fox');
+  foxContainer.innerHTML = BUDDY_SVG;
+  foxContainer.classList.add('fox-waving');
+  document.getElementById('morning-opener-options').innerHTML = available.map(t =>
+    `<button class="choice-pick-btn" onclick="confirmChoice('${t.id}')">
+      <span class="choice-pick-emoji">${t.emoji}</span>
+      <span class="choice-pick-name">${t.label}</span>
+    </button>`
+  ).join('');
+  const overlay = document.getElementById('overlay-morning-opener');
+  overlay.classList.remove('hidden');
+  parseEmoji(overlay);
+}
+
+function updateMorningActivityEmoji() {
+  const el = document.getElementById('morning-activity-emoji');
+  if (!el) return;
+  const ms = state.morning;
+  if (!ms.choiceId) {
+    el.textContent = '';
+    el.className = '';
+    return;
+  }
+  const task = TASKS.morning.choice.find(t => t.id === ms.choiceId);
+  const doneCount = visibleMandatory('morning')
+    .filter(t => !t.isLast)
+    .filter(t => ms.completed.includes(t.id))
+    .length;
+  let stage = 1;
+  if (doneCount >= 5) stage = 4;
+  else if (doneCount >= 3) stage = 3;
+  else if (doneCount >= 1) stage = 2;
+  el.textContent = task ? task.emoji : '';
+  el.className = `visible emoji-stage-${stage}`;
+  parseEmoji(el);
 }
 
 function showMorningChoicePick() {
@@ -1170,6 +1258,7 @@ function finishTask(id) {
   setTimeout(() => {
     renderRoutine();
     updateTimeDisplay();
+    if (mode === 'morning') updateMorningActivityEmoji();
   }, 320);
 }
 
@@ -1341,7 +1430,9 @@ function closeChoicePick(e) {
 
 function confirmChoice(id) {
   document.getElementById('overlay-choice-pick').classList.add('hidden');
+  document.getElementById('overlay-morning-opener').classList.add('hidden');
   selectChoice(id);
+  updateMorningActivityEmoji();
 }
 
 function showCompletion() {
