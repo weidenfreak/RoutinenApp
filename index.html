@@ -438,13 +438,7 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
 #bedtime-bg.dark { background:#0D1B2A; }
 #bedtime-stars-wrap { position:absolute; inset:0; pointer-events:none; }
 .bedtime-inner { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:20px; padding:20px; }
-#bedtime-fox-wrap { width:min(130px,33vw); transform-origin:bottom center; }
-@keyframes foxSleep {
-  0%   { transform:translateY(0)    rotate(0deg);  opacity:1;    }
-  25%  { transform:translateY(8px)  rotate(-30deg);opacity:1;    }
-  70%  { transform:translateY(20px) rotate(-75deg);opacity:0.9;  }
-  100% { transform:translateY(26px) rotate(-90deg);opacity:0.75; }
-}
+#bedtime-fox-wrap { width:min(210px,52vw); transition:opacity .9s ease; }
 #bedtime-msg { font-size:clamp(1.8rem,6vw,2.8rem); font-weight:800; text-align:center; color:var(--text); transition:color 1.8s ease; }
 #bedtime-msg.dark { color:#FFF5B6; }
 #bedtime-hint { font-size:1rem; color:#AAA; transition:color 1.8s ease; }
@@ -1185,6 +1179,37 @@ const BUDDY_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 145" 
   <ellipse cx="60" cy="134" rx="13" ry="8" fill="#F07020"/>
 </svg>`;
 
+const SLEEPING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 100" width="100%" height="100%">
+  <!-- Schwanz (links, nach oben geschwungen) -->
+  <path d="M26,72 Q4,54 10,30 Q16,10 30,16 Q40,22 36,42 Q30,58 38,70 Z" fill="#F07020"/>
+  <ellipse cx="32" cy="64" rx="8" ry="5" fill="#FFF8F0" transform="rotate(30 32 64)"/>
+  <!-- Körper (liegend) -->
+  <ellipse cx="78" cy="65" rx="52" ry="24" fill="#F07020"/>
+  <ellipse cx="78" cy="70" rx="34" ry="15" fill="#FFF8F0"/>
+  <!-- Pfoten vorne -->
+  <ellipse cx="120" cy="85" rx="16" ry="7" fill="#F07020" transform="rotate(-12 120 85)"/>
+  <ellipse cx="100" cy="87" rx="14" ry="7" fill="#F07020" transform="rotate(5 100 87)"/>
+  <!-- Ohren (zeigen nach oben) -->
+  <polygon points="112,22 104,4 128,18" fill="#F07020"/>
+  <polygon points="150,20 158,2 138,18" fill="#F07020"/>
+  <polygon points="114,21 109,8 125,17" fill="#F5A0A0"/>
+  <polygon points="149,19 154,7 140,17" fill="#F5A0A0"/>
+  <!-- Kopf -->
+  <circle cx="128" cy="40" r="27" fill="#F07020"/>
+  <!-- Schnauze -->
+  <ellipse cx="148" cy="54" rx="14" ry="10" fill="#FFF8F0"/>
+  <!-- Rötung -->
+  <circle cx="118" cy="48" r="7" fill="#F09070" opacity="0.35"/>
+  <circle cx="148" cy="44" r="6" fill="#F09070" opacity="0.35"/>
+  <!-- Geschlossene Augen -->
+  <path d="M116,34 Q122,29 128,34" fill="none" stroke="#1A0A00" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M133,31 Q139,26 145,31" fill="none" stroke="#1A0A00" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Nase -->
+  <ellipse cx="153" cy="52" rx="3.5" ry="2.5" fill="#1A0A00"/>
+  <!-- Mund (lächelnd) -->
+  <path d="M148,57 Q152,61 156,57" fill="none" stroke="#1A0A00" stroke-width="1.8" stroke-linecap="round"/>
+</svg>`;
+
 const STAR_DATA = [
   {t:'7%', l:'12%',d:'2.1s',dl:'0s'  },{t:'11%',l:'78%',d:'1.8s',dl:'.3s'},
   {t:'24%',l:'4%', d:'2.3s',dl:'.6s' },{t:'17%',l:'88%',d:'1.9s',dl:'.1s'},
@@ -1253,19 +1278,20 @@ function showBedtime() {
   parseEmoji(overlay);
 
   // Fox winkt nach 600 ms
-  const foxSvg = foxWrap.querySelector('svg');
-  if (foxSvg) {
-    foxSvg.style.transformOrigin = 'bottom center';
-    foxSvg.style.display = 'block';
-    setTimeout(() => {
-      foxSvg.style.animation = 'foxWave .55s ease-in-out 3 forwards';
-    }, 600);
-  }
+  setTimeout(() => {
+    const foxSvg = foxWrap.querySelector('svg');
+    if (foxSvg) foxSvg.style.animation = 'foxWave .55s ease-in-out 3 forwards';
+  }, 600);
 
-  // Nach ~2,5 s: Fuchs legt sich hin + Licht geht langsam aus
+  // Nach ~2,5 s: Fuchs blendet zu liegendem Fuchs über + Licht geht langsam aus
   setTimeout(() => {
     bg.classList.add('dark');
-    if (foxSvg) foxSvg.style.animation = 'foxSleep 3s ease-in-out forwards';
+    // Sitzenden Fuchs ausblenden
+    foxWrap.style.opacity = '0';
+    setTimeout(() => {
+      foxWrap.innerHTML = SLEEPING_SVG;
+      foxWrap.style.opacity = '1';
+    }, 900);
   }, 2500);
 
   // Nach ~5 s: Text + Sterne erscheinen (wenn es schon dunkler ist)
