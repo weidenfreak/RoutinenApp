@@ -548,6 +548,7 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
     <div class="modal-section">
       <div class="modal-section-title">🌙 Abend-Wahlaufgaben</div>
       <div id="choice-settings"></div>
+      <button class="btn-reset-evening" onclick="resetMorning()">↩️ Morgenroutine zurücksetzen</button>
       <button class="btn-reset-evening" onclick="resetEvening()">↩️ Abendroutine zurücksetzen</button>
     </div>
     <button class="modal-close" onclick="closeSettings()">Fertig</button>
@@ -1497,6 +1498,16 @@ function toggleChoice(id) {
   syncOrder('evening');
   save();
   openSettings();
+}
+
+function resetMorning() {
+  closeSettings();
+  state.morning.completed   = [];
+  state.morning.globalStart = null;
+  state.morning.choiceId    = null;
+  state.morning.order       = getDefaultOrder('morning');
+  save();
+  if (currentMode === 'morning') { renderRoutine(); updateTimeDisplay(); }
 }
 
 function resetEvening() {
