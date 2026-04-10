@@ -724,7 +724,9 @@ function showHome() {
 function showRoutine(mode) {
   currentMode = mode;
   resetDaily();
-  if (!state[mode].order) { state[mode].order = getDefaultOrder(mode); save(); }
+  if (!state[mode].order) { state[mode].order = getDefaultOrder(mode); }
+  syncOrder(mode);
+  save();
   // Abend: Startzeit setzen wenn noch nicht gesetzt
   if (mode === 'evening' && !state.evening.globalStart) {
     state.evening.globalStart = Date.now();
