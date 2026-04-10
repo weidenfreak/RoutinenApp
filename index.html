@@ -424,7 +424,9 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
     z-index:300; font-size:1.4rem; font-weight:700; text-align:center; padding:32px;
   }
 }
+img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -769,6 +771,11 @@ function renderRoutine() {
   }
 
   initDrag(list);
+  parseEmoji(list);
+}
+
+function parseEmoji(el) {
+  if (typeof twemoji !== 'undefined') twemoji.parse(el, { folder:'svg', ext:'.svg' });
 }
 
 function taskRowHeight(duration) {
@@ -1155,7 +1162,9 @@ function showChoicePick() {
       <span class="choice-pick-name">${t.label}</span>
     </button>`
   ).join('');
-  document.getElementById('overlay-choice-pick').classList.remove('hidden');
+  const overlay = document.getElementById('overlay-choice-pick');
+  overlay.classList.remove('hidden');
+  parseEmoji(overlay);
 }
 
 function closeChoicePick(e) {
@@ -1173,7 +1182,9 @@ function showCompletion() {
   document.getElementById('stars-wrap').innerHTML = STAR_DATA.map((s,i) =>
     `<div class="star" style="top:${s.t};left:${s.l};--d:${s.d};--dl:${s.dl}">${['⭐','✨','🌟','💫'][i%4]}</div>`
   ).join('');
-  document.getElementById('overlay-completion').classList.remove('hidden');
+  const completion = document.getElementById('overlay-completion');
+  completion.classList.remove('hidden');
+  parseEmoji(completion);
 }
 
 function hideCompletion() {
@@ -1286,6 +1297,7 @@ async function checkWeather() {
 // ── INIT ─────────────────────────────────────────────────────────
 
 resetDaily();
+parseEmoji(document.body);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
