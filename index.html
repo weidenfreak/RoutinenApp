@@ -539,18 +539,8 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
 <!-- ══ SETTINGS MODAL ══ -->
 <div id="modal-settings" class="hidden" onclick="closeSettings()">
   <div class="modal-box" onclick="event.stopPropagation()">
-    <div class="modal-title">⚙️ Eltern-Einstellungen</div>
-    <div class="setting-row">
-      <span class="setting-label">☀️ Sonnencreme</span>
-      <button id="btn-sunscreen" class="toggle on" onclick="toggleSunscreen()">Ein ☀️</button>
-    </div>
-    <div id="weather-info" class="weather-info"></div>
-    <div class="modal-section">
-      <div class="modal-section-title">🌙 Abend-Wahlaufgaben</div>
-      <div id="choice-settings"></div>
-      <button class="btn-reset-evening" onclick="resetMorning()">↩️ Morgenroutine zurücksetzen</button>
-      <button class="btn-reset-evening" onclick="resetEvening()">↩️ Abendroutine zurücksetzen</button>
-    </div>
+    <div class="modal-title" id="settings-title">⚙️ Einstellungen</div>
+    <div id="settings-body"></div>
     <button class="modal-close" onclick="closeSettings()">Fertig</button>
   </div>
 </div>
@@ -1455,28 +1445,50 @@ function hideBedtime() {
 // ── SETTINGS ─────────────────────────────────────────────────────
 
 function openSettings() {
-  const btn = document.getElementById('btn-sunscreen');
-  btn.textContent = state.sunscreenEnabled ? 'Ein ☀️' : 'Aus';
-  btn.className   = `toggle ${state.sunscreenEnabled ? 'on' : 'off'}`;
-
-  const wc = state.weatherCheck;
-  const wi = document.getElementById('weather-info');
-  if (wc) {
-    const t = new Date(wc.ts).toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'});
-    wi.textContent = `Check: ${t} · UV ${wc.uv ?? '?'} · Sonne ${Math.round((wc.sun||0)/3600)}h · ${wc.auto ? 'auto' : 'manuell'}`;
-  } else {
-    wi.textContent = 'Noch kein Wetter-Check heute';
-  }
-  // Choice-Aufgaben-Toggles
   const disabled = state.disabledChoices || [];
-  document.getElementById('choice-settings').innerHTML = TASKS.evening.choice.map(t => {
-    const on = !disabled.includes(t.id);
-    return `<div class="setting-row">
-      <span class="setting-label">${t.emoji} ${t.label}</span>
-      <button class="toggle ${on ? 'on' : 'off'}" onclick="toggleChoice('${t.id}')">${on ? 'Ein' : 'Aus'}</button>
-    </div>`;
-  }).join('');
 
+  function choiceRows(tasks) {
+    return tasks.map(t => {
+      const on = !disabled.includes(t.id);
+      return `<div class="setting-row">
+        <span class="setting-label">${t.emoji} ${t.label}</span>
+        <button class="toggle ${on ? 'on' : 'off'}" onclick="toggleChoice('${t.id}')">${on ? 'Ein' : 'Aus'}</button>
+      </div>`;
+    }).join('');
+  }
+
+  let title, html;
+
+  if (currentMode === 'morning') {
+    title = '🌅 Morgen-Einstellungen';
+    const wc = state.weatherCheck;
+    const wcText = wc
+      ? `Check: ${new Date(wc.ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} · UV ${wc.uv??'?'} · Sonne ${Math.round((wc.sun||0)/3600)}h · ${wc.auto?'auto':'manuell'}`
+      : 'Noch kein Wetter-Check heute';
+    const sunOn = state.sunscreenEnabled;
+    html = `
+      <div class="setting-row">
+        <span class="setting-label">☀️ Sonnencreme</span>
+        <button id="btn-sunscreen" class="toggle ${sunOn?'on':'off'}" onclick="toggleSunscreen()">${sunOn?'Ein ☀️':'Aus'}</button>
+      </div>
+      <div class="weather-info">${wcText}</div>
+      <div class="modal-section">
+        <div class="modal-section-title">🌅 Morgen-Wahlaufgaben</div>
+        ${choiceRows(TASKS.morning.choice)}
+      </div>
+      <button class="btn-reset-evening" onclick="resetMorning()">↩️ Morgenroutine zurücksetzen</button>`;
+  } else {
+    title = '🌙 Abend-Einstellungen';
+    html = `
+      <div class="modal-section">
+        <div class="modal-section-title">🌙 Abend-Wahlaufgaben</div>
+        ${choiceRows(TASKS.evening.choice)}
+      </div>
+      <button class="btn-reset-evening" onclick="resetEvening()">↩️ Abendroutine zurücksetzen</button>`;
+  }
+
+  document.getElementById('settings-title').textContent = title;
+  document.getElementById('settings-body').innerHTML = html;
   document.getElementById('modal-settings').classList.remove('hidden');
 }
 
@@ -1491,11 +1503,17 @@ function toggleChoice(id) {
   else arr.splice(idx, 1);
   state.disabledChoices = arr;
   // Wenn die aktive Wahlaufgabe deaktiviert wurde, zurücksetzen
-  if (state.evening.choiceId === id && arr.includes(id)) {
-    state.evening.completed = state.evening.completed.filter(x => x !== id);
-    state.evening.choiceId = null;
+  if (arr.includes(id)) {
+    ['morning','evening'].forEach(m => {
+      if (state[m].choiceId === id) {
+        state[m].completed = state[m].completed.filter(x => x !== id);
+        state[m].choiceId  = null;
+        syncOrder(m);
+      }
+    });
+  } else {
+    syncOrder(currentMode);
   }
-  syncOrder('evening');
   save();
   openSettings();
 }
