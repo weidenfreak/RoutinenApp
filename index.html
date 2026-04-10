@@ -698,14 +698,19 @@ function syncOrder(mode) {
   // Remove tasks no longer visible
   ms.order = ms.order.filter(id => allIds.includes(id));
 
-  // Add newly visible tasks (insert before lastId, or append)
-  for (const id of allIds) {
-    if (!ms.order.includes(id)) {
-      if (lastId && ms.order.includes(lastId)) {
-        ms.order.splice(ms.order.indexOf(lastId), 0, id);
-      } else {
-        ms.order.push(id);
-      }
+  // Add newly visible tasks at their natural position (matching TASKS array order)
+  for (let i = 0; i < allIds.length; i++) {
+    const id = allIds[i];
+    if (ms.order.includes(id)) continue;
+    // Insert after the last already-present predecessor in allIds
+    const predecessors = allIds.slice(0, i).filter(x => ms.order.includes(x));
+    if (predecessors.length > 0) {
+      const after = predecessors[predecessors.length - 1];
+      ms.order.splice(ms.order.indexOf(after) + 1, 0, id);
+    } else if (lastId && ms.order.includes(lastId)) {
+      ms.order.splice(ms.order.indexOf(lastId), 0, id);
+    } else {
+      ms.order.push(id);
     }
   }
 
