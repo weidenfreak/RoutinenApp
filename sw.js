@@ -1,4 +1,4 @@
-const CACHE = 'routinen-v4';
+const CACHE = 'routinen-v5';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
@@ -16,20 +16,20 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Only cache same-origin GET requests — pass through API calls (weather)
+  // Only handle same-origin GET requests — pass through API calls (weather)
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
 
+  // Network-first: immer aktuellen Stand laden, Cache nur als Fallback (offline)
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      const network = fetch(e.request).then(res => {
+    fetch(e.request)
+      .then(res => {
         if (res && res.status === 200) {
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return res;
-      }).catch(() => null);
-      return cached || network;
-    })
+      })
+      .catch(() => caches.match(e.request))
   );
 });
