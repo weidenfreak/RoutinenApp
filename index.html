@@ -434,12 +434,17 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
   overflow:hidden; animation:fadeIn .4s ease;
 }
 #overlay-bedtime.hidden { display:none; }
-#bedtime-bg { position:absolute; inset:0; background:var(--yellow); transition:background 2.2s ease; }
+#bedtime-bg { position:absolute; inset:0; background:var(--yellow); transition:background 6s ease; }
 #bedtime-bg.dark { background:#0D1B2A; }
 #bedtime-stars-wrap { position:absolute; inset:0; pointer-events:none; }
 .bedtime-inner { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:20px; padding:20px; }
-#bedtime-fox-wrap { width:min(130px,33vw); }
-@keyframes foxSleep { 0%{transform:translateY(0) rotate(0deg);opacity:1;} 100%{transform:translateY(30px) rotate(-22deg);opacity:0.5;} }
+#bedtime-fox-wrap { width:min(130px,33vw); transform-origin:bottom center; }
+@keyframes foxSleep {
+  0%   { transform:translateY(0)    rotate(0deg);  opacity:1;    }
+  25%  { transform:translateY(8px)  rotate(-30deg);opacity:1;    }
+  70%  { transform:translateY(20px) rotate(-75deg);opacity:0.9;  }
+  100% { transform:translateY(26px) rotate(-90deg);opacity:0.75; }
+}
 #bedtime-msg { font-size:clamp(1.8rem,6vw,2.8rem); font-weight:800; text-align:center; color:var(--text); transition:color 1.8s ease; }
 #bedtime-msg.dark { color:#FFF5B6; }
 #bedtime-hint { font-size:1rem; color:#AAA; transition:color 1.8s ease; }
@@ -1257,18 +1262,22 @@ function showBedtime() {
     }, 600);
   }
 
-  // Nach ~2,5 s: Licht aus, Fuchs schläft ein, Sterne erscheinen
+  // Nach ~2,5 s: Fuchs legt sich hin + Licht geht langsam aus
   setTimeout(() => {
     bg.classList.add('dark');
+    if (foxSvg) foxSvg.style.animation = 'foxSleep 3s ease-in-out forwards';
+  }, 2500);
+
+  // Nach ~5 s: Text + Sterne erscheinen (wenn es schon dunkler ist)
+  setTimeout(() => {
     msg.textContent = 'Gute Nacht! 💤';
     msg.classList.add('dark');
     hint.classList.add('dark');
-    if (foxSvg) foxSvg.style.animation = 'foxSleep 1.4s ease forwards';
     starsEl.innerHTML = STAR_DATA.map((s,i) =>
       `<div class="star" style="top:${s.t};left:${s.l};--d:${s.d};--dl:${s.dl}">${['⭐','✨','🌟','💫'][i%4]}</div>`
     ).join('');
     parseEmoji(starsEl);
-  }, 2500);
+  }, 5000);
 }
 
 function hideBedtime() {
