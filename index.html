@@ -426,6 +426,24 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   }
 }
 img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
+
+/* ══ BEDTIME OVERLAY ══ */
+#overlay-bedtime {
+  position:fixed; inset:0; z-index:100; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden; animation:fadeIn .4s ease;
+}
+#overlay-bedtime.hidden { display:none; }
+#bedtime-bg { position:absolute; inset:0; background:var(--yellow); transition:background 2.2s ease; }
+#bedtime-bg.dark { background:#0D1B2A; }
+#bedtime-stars-wrap { position:absolute; inset:0; pointer-events:none; }
+.bedtime-inner { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:20px; padding:20px; }
+#bedtime-fox-wrap { width:min(220px,55vw); }
+@keyframes foxSleep { 0%{transform:translateY(0) rotate(0deg);opacity:1;} 100%{transform:translateY(30px) rotate(-22deg);opacity:0.5;} }
+#bedtime-msg { font-size:clamp(1.8rem,6vw,2.8rem); font-weight:800; text-align:center; color:var(--text); transition:color 1.8s ease; }
+#bedtime-msg.dark { color:#FFF5B6; }
+#bedtime-hint { font-size:1rem; color:#AAA; transition:color 1.8s ease; }
+#bedtime-hint.dark { color:rgba(255,245,182,.45); }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
@@ -474,6 +492,17 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
     <div class="stars-wrap" id="stars-wrap"></div>
     <div class="fox-wrap" id="fox-wrap"></div>
     <div class="completion-hint">Antippen zum Weitermachen ✨</div>
+  </div>
+</div>
+
+<!-- ══ BEDTIME OVERLAY ══ -->
+<div id="overlay-bedtime" class="hidden" onclick="hideBedtime()">
+  <div id="bedtime-bg"></div>
+  <div id="bedtime-stars-wrap"></div>
+  <div class="bedtime-inner">
+    <div id="bedtime-fox-wrap"></div>
+    <div id="bedtime-msg"></div>
+    <div id="bedtime-hint">Antippen zum Weitermachen ✨</div>
   </div>
 </div>
 
@@ -823,20 +852,15 @@ function renderRow(t, ms) {
 }
 
 function renderChoiceRow(task, ms, available) {
-  const done = ms.completed.includes(task.id);
-  const h    = 300; // Wahlaufgabe: ca. 3× eine Pflichtaufgabe
+  const h = 300; // Wahlaufgabe: ca. 3× eine Pflichtaufgabe
 
-  const checkBtn = done
-    ? `<button class="btn-check" onclick="unfinishTask('${task.id}')">✅</button>`
-    : `<button class="btn-check" onclick="finishTask('${task.id}')">✓</button>`;
-
-  const swapChips = !done ? `<div class="choice-swap-row">${
+  const swapChips = `<div class="choice-swap-row">${
     available.filter(t => t.id !== task.id).map(t =>
       `<button class="choice-swap-btn" onclick="selectChoice('${t.id}')">${t.emoji} ${t.label}</button>`
     ).join('')
-  }</div>` : '';
+  }</div>`;
 
-  return `<div class="task-row${done ? ' done' : ''}" data-id="${task.id}" data-choice="true" style="min-height:${h}px">
+  return `<div class="task-row" data-id="${task.id}" data-choice="true" style="min-height:${h}px">
   <div class="drag-handle" style="visibility:hidden">⠿</div>
   <div class="task-content">
     <div class="task-emoji-big">${task.emoji}</div>
@@ -846,7 +870,6 @@ function renderChoiceRow(task, ms, available) {
       ${swapChips}
     </div>
   </div>
-  ${checkBtn}
 </div>`;
 }
 
@@ -1035,9 +1058,7 @@ function finishTask(id) {
 
   if (allMandatoryDone(mode)) {
     if (mode === 'evening') {
-      const choiceId   = ms.choiceId;
-      const choiceDone = choiceId && ms.completed.includes(choiceId);
-      setTimeout(() => choiceDone ? showCompletion() : showChoicePick(), 400);
+      setTimeout(() => showBedtime(), 400);
     } else {
       setTimeout(() => showCompletion(), 400);
     }
@@ -1200,6 +1221,55 @@ function showCompletion() {
 
 function hideCompletion() {
   document.getElementById('overlay-completion').classList.add('hidden');
+  showHome();
+}
+
+function showBedtime() {
+  clearInterval(timeIv); timeIv = null;
+
+  const overlay  = document.getElementById('overlay-bedtime');
+  const foxWrap  = document.getElementById('bedtime-fox-wrap');
+  const msg      = document.getElementById('bedtime-msg');
+  const hint     = document.getElementById('bedtime-hint');
+  const bg       = document.getElementById('bedtime-bg');
+  const starsEl  = document.getElementById('bedtime-stars-wrap');
+
+  // Reset
+  foxWrap.innerHTML = FOX_SVG;
+  msg.textContent   = 'Super gemacht! 🌙';
+  msg.className     = '';
+  hint.className    = '';
+  bg.className      = '';
+  starsEl.innerHTML = '';
+  overlay.classList.remove('hidden');
+  parseEmoji(overlay);
+
+  // Fox winkt nach 600 ms
+  const foxSvg = foxWrap.querySelector('svg');
+  if (foxSvg) {
+    foxSvg.style.transformOrigin = 'bottom center';
+    foxSvg.style.display = 'block';
+    setTimeout(() => {
+      foxSvg.style.animation = 'foxWave .55s ease-in-out 3 forwards';
+    }, 600);
+  }
+
+  // Nach ~2,5 s: Licht aus, Fuchs schläft ein, Sterne erscheinen
+  setTimeout(() => {
+    bg.classList.add('dark');
+    msg.textContent = 'Gute Nacht! 💤';
+    msg.classList.add('dark');
+    hint.classList.add('dark');
+    if (foxSvg) foxSvg.style.animation = 'foxSleep 1.4s ease forwards';
+    starsEl.innerHTML = STAR_DATA.map((s,i) =>
+      `<div class="star" style="top:${s.t};left:${s.l};--d:${s.d};--dl:${s.dl}">${['⭐','✨','🌟','💫'][i%4]}</div>`
+    ).join('');
+    parseEmoji(starsEl);
+  }, 2500);
+}
+
+function hideBedtime() {
+  document.getElementById('overlay-bedtime').classList.add('hidden');
   showHome();
 }
 
