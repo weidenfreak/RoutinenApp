@@ -289,6 +289,24 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 .choice-pick-btn:active { transform:scale(.93); box-shadow:0 2px 8px rgba(100,60,180,.15); }
 .choice-pick-emoji { font-size:clamp(2.4rem,9vw,3.4rem); line-height:1; }
 .choice-pick-name  { font-size:clamp(.8rem,2.5vw,.95rem); text-align:center; }
+.choice-pick-btn-sm {
+  padding:14px 18px; min-width:80px;
+  font-size:.9rem;
+  background:rgba(255,255,255,.55);
+  box-shadow:0 2px 10px rgba(0,0,0,.09);
+}
+.choice-pick-btn-sm .choice-pick-emoji { font-size:clamp(1.6rem,6vw,2.2rem); }
+.choice-celebrate-emoji { font-size:clamp(4rem,16vw,6.5rem); line-height:1; text-align:center; }
+.choice-celebrate-name  { font-size:clamp(1.4rem,5vw,2rem); font-weight:800; text-align:center; }
+.choice-pick-viel-spass { font-size:clamp(1.1rem,3.5vw,1.4rem); font-weight:700; color:rgba(0,0,0,.55); text-align:center; }
+.choice-pick-dismiss {
+  margin-top:4px;
+  padding:16px 36px; border-radius:50px; border:none;
+  background:rgba(0,0,0,.12);
+  font-size:clamp(1rem,3vw,1.2rem); font-weight:800; cursor:pointer;
+  color:var(--text); transition:background .15s;
+}
+.choice-pick-dismiss:active { background:rgba(0,0,0,.2); }
 
 /* ══ COMPLETION OVERLAY ══ */
 #overlay-completion {
@@ -514,12 +532,13 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
 </div>
 
 <!-- ══ CHOICE PICK OVERLAY ══ -->
-<div id="overlay-choice-pick" class="hidden" onclick="closeChoicePick(event)">
-  <div class="choice-pick-inner" onclick="event.stopPropagation()">
+<div id="overlay-choice-pick" class="hidden">
+  <div class="choice-pick-inner">
     <div class="choice-pick-fox" id="choice-pick-fox"></div>
-    <div class="choice-pick-title">🎉⭐🎉</div>
-    <div class="choice-pick-label">Pflichtaufgaben fertig! Was möchtest du noch?</div>
+    <div id="choice-pick-title"></div>
+    <div id="choice-pick-msg" class="choice-pick-label"></div>
     <div class="choice-pick-options" id="choice-pick-options"></div>
+    <button id="choice-pick-dismiss" class="choice-pick-dismiss" onclick="closeChoicePick()">Los geht's! ✨</button>
   </div>
 </div>
 
@@ -1031,16 +1050,48 @@ function updateMorningActivityEmoji() {
 function showMorningChoicePick() {
   const available = TASKS.morning.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
   if (!available.length) return;
+
+  const choiceId = state.morning.choiceId;
+  const chosen   = choiceId ? TASKS.morning.choice.find(t => t.id === choiceId) : null;
+
   document.getElementById('choice-pick-fox').innerHTML = BUDDY_SVG;
-  document.getElementById('choice-pick-options').innerHTML = available.map(t =>
-    `<button class="choice-pick-btn" onclick="confirmChoice('${t.id}')">
-      <span class="choice-pick-emoji">${t.emoji}</span>
-      <span class="choice-pick-name">${t.label}</span>
-    </button>`
-  ).join('');
+
+  const titleEl   = document.getElementById('choice-pick-title');
+  const msgEl     = document.getElementById('choice-pick-msg');
+  const optsEl    = document.getElementById('choice-pick-options');
+  const dismissEl = document.getElementById('choice-pick-dismiss');
+
+  if (chosen) {
+    titleEl.innerHTML = `<div class="choice-celebrate-emoji">${chosen.emoji}</div>
+                         <div class="choice-celebrate-name">${chosen.label}</div>`;
+    msgEl.innerHTML   = `<span class="choice-pick-viel-spass">Viel Spaß! 🎉</span>`;
+    optsEl.innerHTML  = available.filter(t => t.id !== choiceId).map(t =>
+      `<button class="choice-pick-btn choice-pick-btn-sm" onclick="switchChoice('${t.id}')">
+        <span class="choice-pick-emoji">${t.emoji}</span>
+        <span class="choice-pick-name">${t.label}</span>
+      </button>`
+    ).join('');
+    dismissEl.style.display = '';
+  } else {
+    titleEl.innerHTML = `<div class="choice-pick-title">🎉⭐🎉</div>`;
+    msgEl.textContent = 'Pflichtaufgaben fertig! Was möchtest du noch?';
+    optsEl.innerHTML  = available.map(t =>
+      `<button class="choice-pick-btn" onclick="switchChoice('${t.id}')">
+        <span class="choice-pick-emoji">${t.emoji}</span>
+        <span class="choice-pick-name">${t.label}</span>
+      </button>`
+    ).join('');
+    dismissEl.style.display = 'none';
+  }
+
   const overlay = document.getElementById('overlay-choice-pick');
   overlay.classList.remove('hidden');
   parseEmoji(overlay);
+}
+
+function switchChoice(id) {
+  selectChoice(id);
+  showMorningChoicePick();
 }
 
 // ── TIME DISPLAY ─────────────────────────────────────────────────
@@ -1304,21 +1355,6 @@ const STAR_DATA = [
   {t:'78%',l:'10%',d:'2.2s',dl:'.4s' },{t:'72%',l:'82%',d:'2.0s',dl:'.7s'},
   {t:'48%',l:'2%', d:'1.7s',dl:'.2s' },{t:'52%',l:'90%',d:'2.4s',dl:'.5s'},
 ];
-
-function showChoicePick() {
-  const available = TASKS.evening.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
-  if (!available.length) { showCompletion(); return; }
-  document.getElementById('choice-pick-fox').innerHTML = BUDDY_SVG;
-  document.getElementById('choice-pick-options').innerHTML = available.map(t =>
-    `<button class="choice-pick-btn" onclick="confirmChoice('${t.id}')">
-      <span class="choice-pick-emoji">${t.emoji}</span>
-      <span class="choice-pick-name">${t.label}</span>
-    </button>`
-  ).join('');
-  const overlay = document.getElementById('overlay-choice-pick');
-  overlay.classList.remove('hidden');
-  parseEmoji(overlay);
-}
 
 function closeChoicePick(e) {
   document.getElementById('overlay-choice-pick').classList.add('hidden');
