@@ -1062,7 +1062,7 @@ function finishTask(id) {
 
   if (allMandatoryDone(mode)) {
     if (mode === 'evening') {
-      setTimeout(() => showBedtime(), 400);
+      setTimeout(() => { renderRoutine(); showBedtime(); }, 400);
     } else {
       setTimeout(() => showCompletion(), 400);
     }
@@ -1313,7 +1313,6 @@ function showBedtime() {
 
 function hideBedtime() {
   document.getElementById('overlay-bedtime').classList.add('hidden');
-  showHome();
 }
 
 // ── SETTINGS ─────────────────────────────────────────────────────
