@@ -10,20 +10,24 @@
 <title>Routinen</title>
 <style>
 :root {
-  --cream:    #F5F5F5;
-  --green:    #A8D5B5;
-  --green-dk: #1E5E34;
-  --teal:     #9DD4CF;
-  --teal-dk:  #2E7A74;
-  --amber:    #F9D98A;
-  --peach:    #FECAA0;
-  --text:     #2D2D2D;
-  --muted:    #888;
+  --blue:     #DEF1FF;
+  --yellow:   #FFF5B6;
+  --lime:     #BEEB6C;
+  --peach:    #FFB7A9;
+  --pink:     #FFB1B1;
+  --text:     #5C5C5C;
+  --muted:    #999;
+  --cream:    #F0F8FF;
+  --teal:     #BEEB6C;
+  --teal-dk:  #5A8B1A;
+  --amber:    #FFD06B;
+  --green:    #BEEB6C;
+  --green-dk: #4A7A0A;
   --r-lg: 24px;
   --r-md: 16px;
   --r-sm: 12px;
-  --sh:   0 4px 16px rgba(0,0,0,.10);
-  --sh-s: 0 2px 8px  rgba(0,0,0,.07);
+  --sh:   0 4px 16px rgba(0,0,0,.08);
+  --sh-s: 0 2px 8px  rgba(0,0,0,.06);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
@@ -39,7 +43,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 #screen-home {
   align-items:stretch; justify-content:center;
   padding:40px 24px 80px; gap:20px;
-  background:#F5F5F5;
+  background:var(--blue);
 }
 .app-title { text-align:center; font-size:clamp(1.5rem,5vw,2.2rem); font-weight:800; margin-bottom:8px; }
 
@@ -73,7 +77,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 .routine-header {
   position:sticky; top:0;
   display:flex; flex-direction:column; gap:0;
-  background:#fff; box-shadow:0 3px 14px rgba(0,0,0,.08);
+  background:var(--yellow); box-shadow:0 3px 14px rgba(0,0,0,.08);
   z-index:20;
 }
 .routine-header-top {
@@ -82,7 +86,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 }
 .back-btn {
   width:48px; height:48px; border-radius:var(--r-sm); border:none;
-  background:#F4F4F4; font-size:1.8rem; cursor:pointer;
+  background:rgba(0,0,0,.06); font-size:1.8rem; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
   flex-shrink:0; transition:background .15s;
 }
@@ -90,7 +94,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 
 /* ══ TIME DISPLAY (Morgen) ══ */
 .time-display { flex:1; display:flex; flex-direction:column; gap:4px; }
-.time-track { height:14px; background:#EEE; border-radius:7px; overflow:hidden; }
+.time-track { height:14px; background:rgba(0,0,0,.08); border-radius:7px; overflow:hidden; }
 .time-fill {
   height:100%; width:0%;
   background:linear-gradient(90deg,var(--teal),#5BB8B0);
@@ -106,9 +110,9 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   box-shadow:inset 0 2px 6px rgba(0,0,0,.10);
 }
 .budget-seg { height:100%; transition:width .8s ease; min-width:0; flex-shrink:0; }
-.budget-done      { background:linear-gradient(180deg,#B8E4C8,#6BB88A); }
-.budget-mandatory { background:linear-gradient(180deg,#B5E0DC,#5BB8B0); }
-.budget-choice    { background:linear-gradient(180deg,#CEC3EC,#9A8BC4); }
+.budget-done      { background:linear-gradient(180deg,#D4F590,#BEEB6C); }
+.budget-mandatory { background:linear-gradient(180deg,#EEF8FF,#DEF1FF); }
+.budget-choice    { background:linear-gradient(180deg,#FFFBE0,#FFF5B6); }
 .budget-labels {
   display:flex; justify-content:space-between;
   font-size:.9rem; font-weight:800; color:#555;
@@ -116,15 +120,15 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 }
 
 /* ══ CHOICE SECTION ══ */
-.choice-section { background:linear-gradient(135deg,#C3B8E8,#A090D0); border-radius:var(--r-md); box-shadow:var(--sh-s); padding:16px; }
-.choice-section-label { font-size:.72rem; font-weight:700; color:rgba(0,0,0,.5); text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px; }
+.choice-section { background:var(--yellow); border-radius:var(--r-md); box-shadow:var(--sh-s); padding:16px; }
+.choice-section-label { font-size:.72rem; font-weight:700; color:rgba(0,0,0,.45); text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px; }
 .choice-chips { display:flex; flex-wrap:wrap; gap:8px; }
-.choice-chip { padding:14px 18px; border-radius:var(--r-sm); border:2px solid rgba(0,0,0,.12); background:rgba(255,255,255,.45); font-size:1rem; font-weight:700; cursor:pointer; transition:all .15s; color:#1A1040; }
-.choice-chip.active { background:rgba(255,255,255,.7); border-color:rgba(0,0,0,.2); }
+.choice-chip { padding:14px 18px; border-radius:var(--r-sm); border:2px solid rgba(0,0,0,.12); background:rgba(255,255,255,.55); font-size:1rem; font-weight:700; cursor:pointer; transition:all .15s; color:var(--text); }
+.choice-chip.active { background:rgba(255,255,255,.8); border-color:rgba(0,0,0,.2); }
 .choice-chip:active { transform:scale(.95); }
 .choice-swap-row { display:flex; gap:8px; padding:8px 0 2px; flex-wrap:wrap; }
-.choice-swap-btn { padding:8px 16px; border-radius:20px; border:1.5px solid rgba(0,0,0,.15); background:rgba(255,255,255,.4); font-size:.9rem; cursor:pointer; color:#1A1040; font-weight:600; }
-.choice-swap-btn:active { background:rgba(255,255,255,.6); }
+.choice-swap-btn { padding:8px 16px; border-radius:20px; border:1.5px solid rgba(0,0,0,.15); background:rgba(255,255,255,.5); font-size:.9rem; cursor:pointer; color:var(--text); font-weight:600; }
+.choice-swap-btn:active { background:rgba(255,255,255,.7); }
 .task-tag.choice-tag { background:rgba(0,0,0,.1); color:rgba(0,0,0,.6); }
 
 /* ══ ROUTINE BODY ══ */
@@ -135,7 +139,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 
 .task-row {
   display:flex; align-items:center;
-  background:linear-gradient(135deg,#9DD4CF,#7BBFBA);
+  background:var(--blue);
   border-radius:var(--r-md);
   box-shadow:var(--sh-s); min-height:80px;
   border:3px solid transparent;
@@ -144,13 +148,19 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 }
 .task-row.done {
   opacity:.5;
-  background:linear-gradient(135deg,#A8D5B5,#80C49A);
+  background:var(--blue);
 }
 .task-row[data-choice="true"]:not(.done) {
-  background:linear-gradient(135deg,#C3B8E8,#A090D0);
+  background:var(--yellow);
 }
 .task-row[data-choice="true"].done {
-  background:linear-gradient(135deg,#C3B8E8,#A090D0);
+  background:var(--yellow);
+}
+.task-row[data-id="pyjama"]:not(.done) {
+  background:var(--pink);
+}
+.task-row[data-id="toben"]:not(.done) {
+  background:var(--peach);
 }
 .task-row.last-step { border-color:rgba(0,0,0,.12); }
 .task-row.dragging {
@@ -169,23 +179,24 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 .task-row.done .drag-handle { visibility:hidden; }
 .task-row.last-step .drag-handle { visibility:hidden; }
 
-.task-content { flex:1; padding:14px 4px; min-width:0; }
-.task-emoji-big { font-size:clamp(2rem,7vw,2.6rem); line-height:1; }
-.task-name { font-size:clamp(.88rem,2.6vw,1.05rem); font-weight:700; margin-top:4px; line-height:1.25; color:#1A3030; }
-.task-row[data-choice="true"] .task-name { color:#1A1040; }
-.task-row.done .task-name { color:#1A3820; }
-.task-dur  { font-size:.75rem; color:rgba(0,0,0,.5); margin-top:2px; }
+.task-content { flex:1; padding:14px 4px; min-width:0; display:flex; align-items:center; gap:14px; }
+.task-emoji-big { font-size:clamp(3rem,11vw,4rem); line-height:1; flex-shrink:0; }
+.task-text-group { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; min-width:0; }
+.task-name { font-size:clamp(.95rem,2.8vw,1.15rem); font-weight:700; line-height:1.25; color:var(--text); }
+.task-row[data-choice="true"] .task-name { color:var(--text); }
+.task-row.done .task-name { color:var(--text); }
+.task-dur  { font-size:.8rem; color:rgba(0,0,0,.45); white-space:nowrap; }
 .task-tag  { display:inline-block; font-size:.68rem; font-weight:700; padding:2px 8px; border-radius:20px; margin-top:3px; background:rgba(0,0,0,.1); color:rgba(0,0,0,.6); }
 
 .btn-check {
   width:72px; height:72px; margin:4px 8px 4px 4px; flex-shrink:0;
-  border-radius:50%; border:3px solid rgba(0,0,0,.15);
-  background:rgba(255,255,255,.45); font-size:1.8rem; cursor:pointer;
+  border-radius:50%; border:3px solid var(--lime);
+  background:rgba(255,255,255,.55); font-size:1.8rem; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
   transition:all .15s; font-weight:700;
 }
-.btn-check:active { transform:scale(.9); background:rgba(255,255,255,.7); }
-.task-row.done .btn-check { background:rgba(255,255,255,.5); border-color:rgba(0,0,0,.1); font-size:1.6rem; }
+.btn-check:active { transform:scale(.9); background:var(--lime); }
+.task-row.done .btn-check { background:var(--lime); border-color:var(--lime); font-size:1.6rem; }
 
 /* ══ CHECK PULSE ANIM ══ */
 @keyframes checkPulse {
@@ -194,6 +205,77 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   100% { transform:scale(1); }
 }
 .btn-check.pulse { animation:checkPulse .3s ease; }
+
+/* ══ FOX BUDDY ══ */
+#fox-buddy {
+  position:fixed; top:6px; right:10px;
+  display:flex; flex-direction:column; align-items:center;
+  z-index:60; pointer-events:none;
+}
+.fox-bubble {
+  position:relative;
+  background:#fff; border:2.5px solid #F9B84B;
+  border-radius:14px; padding:8px 14px;
+  font-size:1.6rem; text-align:center; line-height:1.2;
+  box-shadow:0 2px 10px rgba(0,0,0,.13);
+  margin-top:8px;
+  opacity:0; transform:translateY(-6px) scale(.88);
+  transition:opacity .22s, transform .22s;
+}
+.fox-bubble.visible { opacity:1; transform:translateY(0) scale(1); }
+.fox-bubble::after {
+  content:''; position:absolute; top:-9px; left:50%;
+  transform:translateX(-50%);
+  border:5px solid transparent; border-bottom-color:#F9B84B;
+}
+#fox-svg { animation:foxBob 3.5s ease-in-out infinite; transform-origin:bottom center; display:block; overflow:visible; }
+#fox-svg.wave  { animation:foxWave  .55s ease-in-out 3 forwards; }
+#fox-svg.cheer { animation:foxCheer .45s ease-in-out 4 forwards; }
+@keyframes foxBob   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+@keyframes foxWave  { 0%,100%{transform:rotate(0deg)} 25%{transform:rotate(-14deg) translateY(-3px)} 75%{transform:rotate(14deg) translateY(-3px)} }
+@keyframes foxCheer { 0%,100%{transform:translateY(0) scale(1)} 40%{transform:translateY(-18px) scale(1.15)} 70%{transform:translateY(-8px) scale(1.07)} }
+
+/* ══ CONFETTI ══ */
+@keyframes confettiFly {
+  0%   { transform:translate(0,0) rotate(0deg) scale(1); opacity:1; }
+  100% { transform:translate(var(--cx),var(--cy)) rotate(var(--cr)) scale(0.4); opacity:0; }
+}
+.confetti-piece {
+  position:fixed;
+  width:8px; height:8px;
+  border-radius:2px;
+  pointer-events:none;
+  z-index:9999;
+  animation:confettiFly var(--cd) ease-out forwards;
+}
+
+/* ══ CHOICE PICK OVERLAY ══ */
+#overlay-choice-pick {
+  position:fixed; inset:0;
+  background:linear-gradient(160deg,var(--yellow),var(--blue));
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  z-index:100; padding:24px 20px;
+  animation:fadeIn .4s ease;
+}
+#overlay-choice-pick.hidden { display:none; }
+.choice-pick-inner { display:flex; flex-direction:column; align-items:center; gap:18px; width:100%; max-width:420px; }
+.choice-pick-fox   { width:min(160px,42vw); animation:foxBounce 1.1s ease-in-out infinite; }
+.choice-pick-title { font-size:clamp(2rem,7vw,3rem); font-weight:800; text-align:center; }
+.choice-pick-label { font-size:clamp(.9rem,2.8vw,1.1rem); font-weight:700; color:#888; text-align:center; }
+.choice-pick-options { display:flex; flex-wrap:wrap; gap:14px; justify-content:center; width:100%; margin-top:4px; }
+.choice-pick-btn {
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding:22px 26px; border-radius:22px;
+  border:3px solid rgba(0,0,0,.08);
+  background:var(--yellow);
+  box-shadow:0 4px 18px rgba(0,0,0,.12);
+  cursor:pointer; transition:transform .1s, box-shadow .12s;
+  color:var(--text); font-weight:800; min-width:110px;
+}
+.choice-pick-btn:active { transform:scale(.93); box-shadow:0 2px 8px rgba(100,60,180,.15); }
+.choice-pick-emoji { font-size:clamp(2.4rem,9vw,3.4rem); line-height:1; }
+.choice-pick-name  { font-size:clamp(.8rem,2.5vw,.95rem); text-align:center; }
 
 /* ══ COMPLETION OVERLAY ══ */
 #overlay-completion {
@@ -248,7 +330,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 
 .plan-library {
   width:35%; padding:16px; overflow-y:auto;
-  border-right:2px solid #F0E8DC; background:#FFF8F0;
+  border-right:2px solid rgba(0,0,0,.06); background:var(--yellow);
   display:flex; flex-direction:column;
 }
 .plan-lib-title {
@@ -282,10 +364,10 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 .plan-tl-title  { font-size:1.1rem; font-weight:700; }
 .plan-free-label {
   font-size:.9rem; font-weight:600; color:var(--teal-dk);
-  background:#EEF8F7; padding:4px 10px; border-radius:20px;
+  background:var(--blue); padding:4px 10px; border-radius:20px;
 }
 .plan-timeline {
-  flex:1; background:#F8F4F0; border-radius:var(--r-md);
+  flex:1; background:var(--blue); border-radius:var(--r-md);
   overflow-y:auto; position:relative; min-height:100px;
   padding:6px 0;
 }
@@ -300,8 +382,8 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   cursor:grab; touch-action:none; transition:box-shadow .15s;
   box-sizing:border-box;
 }
-.plan-block.mandatory { background:linear-gradient(135deg,#9DD4CF,#7BBFBA); color:#1A3D3A; }
-.plan-block.choice    { background:linear-gradient(135deg,#B5A8D5,#9A8BC4); color:#2A1A5A; }
+.plan-block.mandatory { background:var(--blue); color:var(--text); }
+.plan-block.choice    { background:var(--yellow); color:var(--text); }
 .plan-block .block-emoji  { font-size:1.4rem; flex-shrink:0; }
 .plan-block .block-name   { font-size:.88rem; font-weight:600; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .plan-block .block-dur    { font-size:.75rem; opacity:.75; flex-shrink:0; }
@@ -316,7 +398,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 
 .plan-free-block {
   margin:3px 8px; border-radius:10px;
-  background:repeating-linear-gradient(45deg,#E8F5F3,#E8F5F3 8px,#F0FAF8 8px,#F0FAF8 16px);
+  background:repeating-linear-gradient(45deg,#EAF8FF,#EAF8FF 8px,#DEF1FF 8px,#DEF1FF 16px);
   display:flex; align-items:center; justify-content:center;
   font-size:.85rem; font-weight:600; color:var(--teal-dk); min-height:30px;
 }
@@ -328,8 +410,8 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 
 .btn-letsgo {
   flex-shrink:0; padding:14px 20px; border-radius:var(--r-lg);
-  border:none; background:linear-gradient(135deg,#A8D5B5,#6BB88A);
-  color:#1A5E34; font-size:1.2rem; font-weight:800; cursor:pointer;
+  border:none; background:linear-gradient(135deg,#D4F590,#BEEB6C);
+  color:#3A6010; font-size:1.2rem; font-weight:800; cursor:pointer;
   box-shadow:var(--sh); transition:transform .15s;
 }
 .btn-letsgo:active { transform:scale(.96); }
@@ -351,7 +433,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 <!-- ══ HOME SCREEN ══ -->
 <div id="screen-home" class="screen active">
   <div class="app-title">Was machen wir heute? 🌟</div>
-  <div class="mode-card morning disabled">
+  <div class="mode-card morning" onclick="showRoutine('morning')">
     <div class="mode-emoji">🌅</div>
     <div class="mode-label">Morgenroutine</div>
   </div>
@@ -371,6 +453,16 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   </div>
   <div class="routine-body">
     <div id="task-list"></div>
+  </div>
+</div>
+
+<!-- ══ CHOICE PICK OVERLAY ══ -->
+<div id="overlay-choice-pick" class="hidden" onclick="closeChoicePick(event)">
+  <div class="choice-pick-inner" onclick="event.stopPropagation()">
+    <div class="choice-pick-fox" id="choice-pick-fox"></div>
+    <div class="choice-pick-title">🎉⭐🎉</div>
+    <div class="choice-pick-label">Pflichtaufgaben fertig! Was möchtest du noch?</div>
+    <div class="choice-pick-options" id="choice-pick-options"></div>
   </div>
 </div>
 
@@ -402,6 +494,54 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   </div>
 </div>
 
+<!-- ══ FOX BUDDY ══ -->
+<div id="fox-buddy">
+  <svg id="fox-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 145" width="64" height="103">
+    <!-- Tail -->
+    <path d="M66,142 Q94,118 86,84 Q80,62 68,70 Q58,78 64,100 Q70,124 62,140 Z" fill="#F07020"/>
+    <ellipse cx="62" cy="135" rx="9" ry="8" fill="#FFF8F0" transform="rotate(-15 62 135)"/>
+    <!-- Body -->
+    <ellipse cx="44" cy="104" rx="26" ry="30" fill="#F07020"/>
+    <ellipse cx="44" cy="111" rx="15" ry="22" fill="#FFF8F0"/>
+    <!-- Left arm sitting -->
+    <ellipse cx="20" cy="104" rx="9" ry="16" fill="#F07020" transform="rotate(-20 20 104)"/>
+    <!-- Right arm sitting (hidden when waving) -->
+    <ellipse id="fox-arm-down" cx="68" cy="104" rx="9" ry="16" fill="#F07020" transform="rotate(20 68 104)"/>
+    <!-- Right arm raised / wave (hidden by default) -->
+    <g id="fox-arm-wave" style="display:none">
+      <path d="M 63,93 Q 76,70 83,57" stroke="#F07020" stroke-width="18" stroke-linecap="round" fill="none"/>
+      <circle cx="83" cy="57" r="10" fill="#F07020"/>
+      <circle cx="83" cy="57" r="6"  fill="#C85010"/>
+    </g>
+    <!-- Ears before head so head overlaps their bases -->
+    <polygon points="17,40 8,5 37,27"  fill="#F07020"/>
+    <polygon points="71,40 82,5 51,27" fill="#F07020"/>
+    <!-- Head -->
+    <circle cx="44" cy="46" r="27" fill="#F07020"/>
+    <!-- Inner ear pink -->
+    <polygon points="19,38 13,12 34,27" fill="#F5A0A0"/>
+    <polygon points="69,38 77,12 54,27" fill="#F5A0A0"/>
+    <!-- Muzzle -->
+    <ellipse cx="44" cy="61" rx="17" ry="13" fill="#FFF8F0"/>
+    <!-- Blush -->
+    <circle cx="27" cy="54" r="7" fill="#F09070" opacity="0.35"/>
+    <circle cx="61" cy="54" r="7" fill="#F09070" opacity="0.35"/>
+    <!-- Eyes -->
+    <circle cx="33" cy="42" r="6"   fill="#1A0A00"/>
+    <circle cx="55" cy="42" r="6"   fill="#1A0A00"/>
+    <circle cx="35" cy="40" r="2.5" fill="white"/>
+    <circle cx="57" cy="40" r="2.5" fill="white"/>
+    <!-- Nose -->
+    <ellipse cx="44" cy="57" rx="4" ry="3" fill="#1A0A00"/>
+    <!-- Mouth -->
+    <path d="M38,63 Q44,69 50,63" fill="none" stroke="#1A0A00" stroke-width="2" stroke-linecap="round"/>
+    <!-- Front paws -->
+    <ellipse cx="28" cy="134" rx="13" ry="8" fill="#F07020"/>
+    <ellipse cx="60" cy="134" rx="13" ry="8" fill="#F07020"/>
+  </svg>
+  <div class="fox-bubble" id="fox-bubble"></div>
+</div>
+
 <!-- ══ SETTINGS TRIGGER ══ -->
 <button id="settings-btn" title="Lang drücken für Einstellungen">⚙️</button>
 
@@ -417,6 +557,7 @@ const TASKS = {
       { id:'pipi',      emoji:'🚽', label:'Pipi + Hände waschen', duration:5 },
       { id:'teeth',     emoji:'🦷', label:'Zähne putzen',          duration:5 },
       { id:'face',      emoji:'🧼', label:'Gesicht waschen',        duration:2 },
+      { id:'hair',      emoji:'💇', label:'Haare kämmen',           duration:2 },
       { id:'dress',     emoji:'👕', label:'Anziehen',               duration:5 },
       { id:'sunscreen', emoji:'☀️', label:'Sonnencreme',            duration:5, conditional:true },
       { id:'go',        emoji:'🥾', label:'Jacke + Schuhe + Los!', duration:10, isLast:true },
@@ -433,6 +574,7 @@ const TASKS = {
       { id:'warts',  emoji:'🩹', label:'Warzenversorgung',      duration:5 },
       { id:'teeth',  emoji:'🦷', label:'Zähne putzen',          duration:5 },
       { id:'face',   emoji:'🧼', label:'Gesicht waschen',        duration:2 },
+      { id:'hair',   emoji:'💇', label:'Haare kämmen',          duration:2 },
       { id:'pipi',   emoji:'🚽', label:'Pipi + Hände waschen',  duration:5 },
       { id:'pyjama', emoji:'👚', label:'Schlafanzug anziehen',  duration:5 },
     ],
@@ -633,7 +775,7 @@ function renderRoutine() {
 }
 
 function taskRowHeight(duration) {
-  return Math.max(80, duration * 8 + 50);
+  return Math.max(100, duration * 20);
 }
 
 function renderRow(t, ms) {
@@ -649,9 +791,11 @@ function renderRow(t, ms) {
 
   const content = `<div class="task-content">
     <div class="task-emoji-big">${t.emoji}</div>
-    <div class="task-name">${t.label}</div>
-    <div class="task-dur">${t.duration}&nbsp;min</div>
-    ${tag}
+    <div class="task-text-group">
+      <div class="task-name">${t.label}</div>
+      <div class="task-dur">${t.duration}&nbsp;min</div>
+      ${tag}
+    </div>
   </div>`;
 
   const checkBtn = done
@@ -665,7 +809,7 @@ function renderRow(t, ms) {
 
 function renderChoiceRow(task, ms, available) {
   const done = ms.completed.includes(task.id);
-  const h    = 120; // Wahlaufgabe hat keine feste Dauer
+  const h    = 300; // Wahlaufgabe: ca. 3× eine Pflichtaufgabe
 
   const checkBtn = done
     ? `<button class="btn-check" onclick="unfinishTask('${task.id}')">✅</button>`
@@ -681,9 +825,11 @@ function renderChoiceRow(task, ms, available) {
   <div class="drag-handle" style="visibility:hidden">⠿</div>
   <div class="task-content">
     <div class="task-emoji-big">${task.emoji}</div>
-    <div class="task-name">${task.label}</div>
-    <span class="task-tag choice-tag">Wahlaufgabe</span>
-    ${swapChips}
+    <div class="task-text-group">
+      <div class="task-name">${task.label}</div>
+      <span class="task-tag choice-tag">Wahlaufgabe</span>
+      ${swapChips}
+    </div>
   </div>
   ${checkBtn}
 </div>`;
@@ -776,13 +922,76 @@ function renderEveningBudgetBar(container) {
       <div class="budget-seg budget-choice"    style="width:${pChoice}%"></div>
     </div>
     <div class="budget-labels">
-      <span>Schlafenszeit 20:30</span>
+      <span>🌙 Bis zum Schlafen</span>
       <span>noch ${remaining}</span>
     </div>`;
   container.innerHTML = '';
 }
 
+// ── FOX BUDDY ─────────────────────────────────────────────────────
+const FOX_EMOJIS = ['⭐','🌟','🎉','👏','💫','✨','🥰','🎊','💛','🌈'];
+let _foxTimer = null;
+
+function foxSay(msg, duration = 2800) {
+  const bubble = document.getElementById('fox-bubble');
+  if (!bubble) return;
+  bubble.textContent = msg;
+  bubble.classList.add('visible');
+  clearTimeout(_foxTimer);
+  _foxTimer = setTimeout(() => bubble.classList.remove('visible'), duration);
+}
+
+function foxReact(remaining) {
+  const svg     = document.getElementById('fox-svg');
+  const armDown = document.getElementById('fox-arm-down');
+  const armWave = document.getElementById('fox-arm-wave');
+  if (!svg) return;
+  svg.className.baseVal = '';
+  void svg.getBoundingClientRect(); // reflow to restart animation
+  if (remaining === 0) {
+    armDown.style.display = '';
+    armWave.style.display = 'none';
+    svg.className.baseVal = 'cheer';
+    foxSay('🥳🎉🎊', 4000);
+  } else {
+    armDown.style.display = 'none';
+    armWave.style.display = '';
+    svg.className.baseVal = 'wave';
+    foxSay(remaining === 1
+      ? '🌙💪'
+      : FOX_EMOJIS[Math.floor(Math.random() * FOX_EMOJIS.length)]);
+  }
+  svg.addEventListener('animationend', () => {
+    svg.className.baseVal = '';
+    armDown.style.display = '';
+    armWave.style.display = 'none';
+  }, { once: true });
+}
+
 // ── TASK ACTIONS ─────────────────────────────────────────────────
+
+function spawnConfetti(originEl) {
+  const rect   = originEl.getBoundingClientRect();
+  const ox     = rect.left + rect.width  / 2;
+  const oy     = rect.top  + rect.height / 2;
+  const colors = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#c77dff','#ff9a3c'];
+  const count  = 18;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.5;
+    const dist  = 60 + Math.random() * 60;
+    el.style.setProperty('--cx', Math.cos(angle) * dist + 'px');
+    el.style.setProperty('--cy', Math.sin(angle) * dist - 20 + 'px');
+    el.style.setProperty('--cr', (Math.random() * 360 - 180) + 'deg');
+    el.style.setProperty('--cd', (0.5 + Math.random() * 0.4) + 's');
+    el.style.left = ox + 'px';
+    el.style.top  = oy + 'px';
+    el.style.background = colors[i % colors.length];
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
 
 function finishTask(id) {
   const mode = currentMode;
@@ -794,15 +1003,29 @@ function finishTask(id) {
   ms.completed.push(id);
   save();
 
-  // Pulse animation on the button
+  // Pulse + confetti
   const row = document.querySelector(`.task-row[data-id="${id}"]`);
   if (row) {
     const btn = row.querySelector('.btn-check');
-    if (btn) { btn.classList.add('pulse'); setTimeout(() => btn.classList.remove('pulse'), 300); }
+    if (btn) {
+      btn.classList.add('pulse');
+      setTimeout(() => btn.classList.remove('pulse'), 300);
+      spawnConfetti(btn);
+    }
   }
 
+  // Fox reaction
+  const remaining = visibleMandatory(mode).filter(t => !ms.completed.includes(t.id)).length;
+  foxReact(remaining);
+
   if (allMandatoryDone(mode)) {
-    setTimeout(() => showCompletion(), 400);
+    if (mode === 'evening') {
+      const choiceId   = ms.choiceId;
+      const choiceDone = choiceId && ms.completed.includes(choiceId);
+      setTimeout(() => choiceDone ? showCompletion() : showChoicePick(), 400);
+    } else {
+      setTimeout(() => showCompletion(), 400);
+    }
     return;
   }
 
@@ -924,6 +1147,28 @@ const STAR_DATA = [
   {t:'78%',l:'10%',d:'2.2s',dl:'.4s' },{t:'72%',l:'82%',d:'2.0s',dl:'.7s'},
   {t:'48%',l:'2%', d:'1.7s',dl:'.2s' },{t:'52%',l:'90%',d:'2.4s',dl:'.5s'},
 ];
+
+function showChoicePick() {
+  const available = TASKS.evening.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+  if (!available.length) { showCompletion(); return; }
+  document.getElementById('choice-pick-fox').innerHTML = FOX_SVG;
+  document.getElementById('choice-pick-options').innerHTML = available.map(t =>
+    `<button class="choice-pick-btn" onclick="confirmChoice('${t.id}')">
+      <span class="choice-pick-emoji">${t.emoji}</span>
+      <span class="choice-pick-name">${t.label}</span>
+    </button>`
+  ).join('');
+  document.getElementById('overlay-choice-pick').classList.remove('hidden');
+}
+
+function closeChoicePick(e) {
+  document.getElementById('overlay-choice-pick').classList.add('hidden');
+}
+
+function confirmChoice(id) {
+  document.getElementById('overlay-choice-pick').classList.add('hidden');
+  selectChoice(id);
+}
 
 function showCompletion() {
   clearInterval(timeIv); timeIv = null;
