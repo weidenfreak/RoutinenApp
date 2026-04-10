@@ -953,7 +953,7 @@ function renderMorningChoiceRow(task, ms, available) {
     ).join('')
   }</div>` : '';
   const checkBtn = done
-    ? `<button class="btn-check" onclick="unfinishTask('${task.id}')">✅</button>`
+    ? `<button class="btn-check" style="pointer-events:none">✅</button>`
     : `<button class="btn-check" onclick="finishTask('${task.id}')">✓</button>`;
   return `<div class="task-row${done ? ' done' : ''}" data-id="${task.id}" data-choice="true" style="min-height:${h}px">
   <div class="drag-handle" style="visibility:hidden">⠿</div>
