@@ -429,7 +429,7 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
 
 /* ══ BEDTIME OVERLAY ══ */
 #overlay-bedtime {
-  position:fixed; inset:0; z-index:100; cursor:pointer;
+  position:fixed; inset:0; z-index:100;
   display:flex; align-items:center; justify-content:center;
   overflow:hidden; animation:fadeIn .4s ease;
 }
@@ -437,12 +437,36 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
 #bedtime-bg { position:absolute; inset:0; background:var(--yellow); transition:background 6s ease; }
 #bedtime-bg.dark { background:#0D1B2A; }
 #bedtime-stars-wrap { position:absolute; inset:0; pointer-events:none; }
-.bedtime-inner { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:20px; padding:20px; }
-#bedtime-fox-wrap { width:min(210px,52vw); transition:opacity .9s ease; }
-#bedtime-msg { font-size:clamp(1.8rem,6vw,2.8rem); font-weight:800; text-align:center; color:var(--text); transition:color 1.8s ease; }
+.bedtime-inner {
+  position:relative; z-index:1; display:flex; flex-direction:column;
+  align-items:center; gap:14px; padding:24px 20px; width:100%; max-width:420px;
+}
+#bedtime-fox-wrap { width:min(90px,22vw); transition:opacity .9s ease; }
+#bedtime-choice-wrap {
+  width:100%; background:rgba(255,255,255,.8); border-radius:var(--r-lg);
+  padding:16px 14px 12px; transition:background 4s ease;
+}
+#bedtime-choice-wrap.dark { background:rgba(255,255,255,.1); }
+#bedtime-choice-label {
+  font-size:1rem; font-weight:700; text-align:center;
+  color:var(--text); margin-bottom:12px; transition:color 4s ease;
+}
+#bedtime-choice-label.dark { color:#FFF5B6; }
+#bedtime-choice-options { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+.bedtime-choice-btn {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:14px 16px; border-radius:var(--r-md); border:3px solid transparent;
+  background:var(--blue); cursor:pointer; transition:all .15s;
+  color:var(--text); font-weight:700; min-width:85px;
+}
+.bedtime-choice-btn.selected { border-color:var(--lime); background:rgba(190,235,108,.35); }
+.bedtime-choice-btn:active { transform:scale(.93); }
+.bedtime-choice-emoji { font-size:1.8rem; line-height:1; }
+.bedtime-choice-name  { font-size:.82rem; text-align:center; }
+#bedtime-msg { font-size:clamp(1.5rem,5vw,2.2rem); font-weight:800; text-align:center; color:var(--text); transition:color 1.8s ease; min-height:1.2em; }
 #bedtime-msg.dark { color:#FFF5B6; }
-#bedtime-hint { font-size:1rem; color:#AAA; transition:color 1.8s ease; }
-#bedtime-hint.dark { color:rgba(255,245,182,.45); }
+#bedtime-hint { font-size:.95rem; color:#888; transition:color 1.8s ease; cursor:pointer; padding:6px 20px; }
+#bedtime-hint.dark { color:rgba(255,245,182,.5); }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
@@ -495,13 +519,17 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
 </div>
 
 <!-- ══ BEDTIME OVERLAY ══ -->
-<div id="overlay-bedtime" class="hidden" onclick="hideBedtime()">
+<div id="overlay-bedtime" class="hidden">
   <div id="bedtime-bg"></div>
   <div id="bedtime-stars-wrap"></div>
   <div class="bedtime-inner">
     <div id="bedtime-fox-wrap"></div>
+    <div id="bedtime-choice-wrap">
+      <div id="bedtime-choice-label"></div>
+      <div id="bedtime-choice-options"></div>
+    </div>
     <div id="bedtime-msg"></div>
-    <div id="bedtime-hint">Antippen zum Weitermachen ✨</div>
+    <div id="bedtime-hint" onclick="hideBedtime()">Fertig ✨</div>
   </div>
 </div>
 
@@ -1262,24 +1290,52 @@ function hideCompletion() {
   showHome();
 }
 
+function renderBedtimeChoices() {
+  const available = TASKS.evening.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+  const selected  = state.evening.choiceId;
+  const label     = document.getElementById('bedtime-choice-label');
+  const opts      = document.getElementById('bedtime-choice-options');
+  if (!label || !opts) return;
+  label.textContent = selected ? 'Schon gewählt — noch wechseln?' : 'Was möchtest du noch machen?';
+  opts.innerHTML = available.map(t =>
+    `<button class="bedtime-choice-btn${selected === t.id ? ' selected' : ''}" onclick="selectBedtimeChoice('${t.id}')">
+      <span class="bedtime-choice-emoji">${t.emoji}</span>
+      <span class="bedtime-choice-name">${t.label}</span>
+    </button>`
+  ).join('');
+  parseEmoji(opts);
+}
+
+function selectBedtimeChoice(id) {
+  state.evening.choiceId = id;
+  syncOrder('evening');
+  save();
+  renderBedtimeChoices();
+}
+
 function showBedtime() {
   clearInterval(timeIv); timeIv = null;
 
-  const overlay  = document.getElementById('overlay-bedtime');
-  const foxWrap  = document.getElementById('bedtime-fox-wrap');
-  const msg      = document.getElementById('bedtime-msg');
-  const hint     = document.getElementById('bedtime-hint');
-  const bg       = document.getElementById('bedtime-bg');
-  const starsEl  = document.getElementById('bedtime-stars-wrap');
+  const overlay      = document.getElementById('overlay-bedtime');
+  const foxWrap      = document.getElementById('bedtime-fox-wrap');
+  const msg          = document.getElementById('bedtime-msg');
+  const hint         = document.getElementById('bedtime-hint');
+  const bg           = document.getElementById('bedtime-bg');
+  const starsEl      = document.getElementById('bedtime-stars-wrap');
+  const choiceWrap   = document.getElementById('bedtime-choice-wrap');
+  const choiceLabel  = document.getElementById('bedtime-choice-label');
 
   // Reset
-  foxWrap.innerHTML = BUDDY_SVG;
-  msg.textContent   = 'Super gemacht! 🌙';
-  msg.className     = '';
-  hint.className    = '';
-  bg.className      = '';
-  starsEl.innerHTML = '';
+  foxWrap.innerHTML  = BUDDY_SVG;
+  foxWrap.style.opacity = '1';
+  msg.textContent    = '';
+  msg.className      = '';
+  hint.className     = '';
+  bg.className       = '';
+  starsEl.innerHTML  = '';
+  choiceWrap.className = '';
   overlay.classList.remove('hidden');
+  renderBedtimeChoices();
   parseEmoji(overlay);
 
   // Fox winkt nach 600 ms
@@ -1288,10 +1344,9 @@ function showBedtime() {
     if (foxSvg) foxSvg.style.animation = 'foxWave .55s ease-in-out 3 forwards';
   }, 600);
 
-  // Nach ~2,5 s: Fuchs blendet zu liegendem Fuchs über + Licht geht langsam aus
+  // Nach 2,5 s: Fuchs legt sich hin, Licht geht aus
   setTimeout(() => {
     bg.classList.add('dark');
-    // Sitzenden Fuchs ausblenden
     foxWrap.style.opacity = '0';
     setTimeout(() => {
       foxWrap.innerHTML = SLEEPING_SVG;
@@ -1299,11 +1354,13 @@ function showBedtime() {
     }, 900);
   }, 2500);
 
-  // Nach ~5 s: Text + Sterne erscheinen (wenn es schon dunkler ist)
+  // Nach 5 s: Gute Nacht + Sterne + Wahlbereich abdunkeln
   setTimeout(() => {
     msg.textContent = 'Gute Nacht! 💤';
     msg.classList.add('dark');
     hint.classList.add('dark');
+    choiceWrap.classList.add('dark');
+    choiceLabel.classList.add('dark');
     starsEl.innerHTML = STAR_DATA.map((s,i) =>
       `<div class="star" style="top:${s.t};left:${s.l};--d:${s.d};--dl:${s.dl}">${['⭐','✨','🌟','💫'][i%4]}</div>`
     ).join('');
