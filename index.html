@@ -176,6 +176,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 }
 .task-row.done .drag-handle { visibility:hidden; }
 .task-row.last-step .drag-handle { visibility:hidden; }
+.task-row[data-follows] .drag-handle { visibility:hidden; }
 
 .task-content { flex:1; padding:14px 4px; min-width:0; display:flex; align-items:center; gap:14px; }
 .task-emoji-big { font-size:clamp(3rem,11vw,4rem); line-height:1; flex-shrink:0; background:rgba(255,255,255,.65); border-radius:50%; width:1.8em; height:1.8em; display:flex; align-items:center; justify-content:center; }
@@ -555,7 +556,7 @@ const TASKS = {
     deadline: { h:9, m:15 },
     mandatory: [
       { id:'pipi',      emoji:'🚽', label:'Pipi machen',           duration:3 },
-      { id:'hands',     emoji:'🤲', label:'Hände waschen',          duration:2 },
+      { id:'hands',     emoji:'🤲', label:'Hände waschen',          duration:2, followsId:'pipi' },
       { id:'teeth',     emoji:'🦷', label:'Zähne putzen',          duration:5 },
       { id:'face',      emoji:'🧽', label:'Gesicht waschen',        duration:2 },
       { id:'hair',      emoji:'🪮', label:'Haare kämmen',           duration:2 },
@@ -574,7 +575,7 @@ const TASKS = {
       { id:'face',   emoji:'🧽', label:'Gesicht waschen',        duration:2 },
       { id:'hair',   emoji:'🪮', label:'Haare kämmen',          duration:2 },
       { id:'pipi',   emoji:'🚽', label:'Pipi machen',           duration:3 },
-      { id:'hands',  emoji:'🤲', label:'Hände waschen',         duration:2 },
+      { id:'hands',  emoji:'🤲', label:'Hände waschen',         duration:2, followsId:'pipi' },
       { id:'pyjama', emoji:'👚', label:'Schlafanzug anziehen',  duration:5 },
     ],
     choice: [
@@ -684,6 +685,14 @@ function syncOrder(mode) {
   if (lastId && ms.order.includes(lastId)) {
     ms.order = ms.order.filter(id => id !== lastId);
     ms.order.push(lastId);
+  }
+
+  // Ensure followsId tasks stay directly after their parent
+  for (const t of getAllTasks(mode)) {
+    if (t.followsId && ms.order.includes(t.id) && ms.order.includes(t.followsId)) {
+      ms.order = ms.order.filter(id => id !== t.id);
+      ms.order.splice(ms.order.indexOf(t.followsId) + 1, 0, t.id);
+    }
   }
 }
 
@@ -808,7 +817,7 @@ function renderRow(t, ms) {
     ? `<button class="btn-check" onclick="unfinishTask('${t.id}')">✅</button>`
     : `<button class="btn-check" onclick="finishTask('${t.id}')">✓</button>`;
 
-  return `<div class="${rowCls}" data-id="${t.id}"${isLast ? ' data-last="true"' : ''} style="min-height:${h}px">
+  return `<div class="${rowCls}" data-id="${t.id}"${isLast ? ' data-last="true"' : ''}${t.followsId ? ' data-follows="true"' : ''} style="min-height:${h}px">
   <div class="drag-handle">⠿</div>${content}${checkBtn}
 </div>`;
 }
@@ -1111,7 +1120,7 @@ function initDrag(listEl) {
     const handle = e.target.closest('.drag-handle');
     if (!handle) return;
     const row = handle.closest('.task-row');
-    if (!row || row.dataset.last === 'true' || row.dataset.choice === 'true' || row.classList.contains('done')) return;
+    if (!row || row.dataset.last === 'true' || row.dataset.choice === 'true' || row.dataset.follows === 'true' || row.classList.contains('done')) return;
 
     e.preventDefault();
     row.classList.add('dragging');
