@@ -941,17 +941,13 @@ function renderChoicePicker(available) {
 }
 
 function renderMorningChoiceRow(task, ms, available) {
-  const done = ms.completed.includes(task.id);
-  const h    = 300;
-  const swapChips = !done ? `<div class="choice-swap-row">${
+  const h = 300;
+  const swapChips = `<div class="choice-swap-row">${
     available.filter(t => t.id !== task.id).map(t =>
       `<button class="choice-swap-btn" onclick="selectChoice('${t.id}')">${t.emoji} ${t.label}</button>`
     ).join('')
-  }</div>` : '';
-  const checkBtn = done
-    ? `<button class="btn-check" style="pointer-events:none">✅</button>`
-    : `<button class="btn-check" onclick="finishTask('${task.id}')">✓</button>`;
-  return `<div class="task-row${done ? ' done' : ''}" data-id="${task.id}" data-choice="true" style="min-height:${h}px">
+  }</div>`;
+  return `<div class="task-row" data-id="${task.id}" data-choice="true" style="min-height:${h}px">
   <div class="drag-handle" style="visibility:hidden">⠿</div>
   <div class="task-content">
     <div class="task-emoji-big">${task.emoji}</div>
@@ -962,7 +958,6 @@ function renderMorningChoiceRow(task, ms, available) {
       ${swapChips}
     </div>
   </div>
-  ${checkBtn}
 </div>`;
 }
 
