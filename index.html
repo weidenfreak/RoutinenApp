@@ -1278,7 +1278,7 @@ async function checkWeather() {
     const d   = await r.json();
     const uv  = d.daily.uv_index_max?.[0]      ?? 0;
     const sun = d.daily.sunshine_duration?.[0] ?? 0;
-    state.sunscreenEnabled = uv >= 3 || sun > 14400;
+    state.sunscreenEnabled = uv >= 3;
     state.weatherCheck = { date:today(), uv, sun, auto:true, ts:Date.now() };
     syncOrder('morning');
     save();
