@@ -81,6 +81,7 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   z-index:20;
 }
 .routine-header-top {
+  position:relative;
   display:flex; align-items:center; gap:12px;
   padding:12px 16px 10px;
 }
@@ -92,16 +93,8 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 }
 .back-btn:active { background:#E0E0E0; }
 
-/* ══ TIME DISPLAY (Morgen) ══ */
-.time-display { flex:1; display:flex; flex-direction:column; gap:4px; }
-.time-track { height:14px; background:rgba(0,0,0,.08); border-radius:7px; overflow:hidden; }
-.time-fill {
-  height:100%; width:0%;
-  background:linear-gradient(90deg,var(--teal),#5BB8B0);
-  border-radius:7px; transition:width .8s ease;
-}
-.time-fill.over { background:linear-gradient(90deg,var(--amber),#F4A942); }
-.time-label { font-size:.82rem; font-weight:700; color:var(--muted); text-align:right; }
+/* ══ TIME DISPLAY ══ */
+.time-display { flex:1; }
 
 /* ══ BUDGET BAR (Abend) ══ */
 .budget-wrap { width:100%; padding:0 0 12px; }
@@ -250,11 +243,14 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
 
 /* ══ MORNING ACTIVITY EMOJI ══ */
 #morning-activity-emoji {
+  position:absolute;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
   font-size:1.4rem;
-  transition:font-size 0.4s ease, opacity 0.3s ease;
-  opacity:0;
   line-height:1;
-  flex-shrink:0;
+  opacity:0;
+  transition:font-size 0.4s ease, opacity 0.3s ease;
+  pointer-events:none;
 }
 #morning-activity-emoji.visible { opacity:1; }
 #morning-activity-emoji.emoji-stage-2 { font-size:2.2rem; }
@@ -799,20 +795,6 @@ function syncOrder(mode) {
   }
 }
 
-function getTotalMin(mode) {
-  const ms  = state[mode];
-  const all = getAllTasks(mode);
-  return (ms.order || []).reduce((sum, id) => {
-    const t = all.find(x => x.id === id);
-    return sum + (t?.duration ?? 0);
-  }, 0);
-}
-
-function getElapsedMin(mode) {
-  const gs = state[mode]?.globalStart;
-  return gs ? (Date.now() - gs) / 60000 : 0;
-}
-
 function allMandatoryDone(mode) {
   return visibleMandatory(mode).every(t => state[mode].completed.includes(t.id));
 }
@@ -1087,22 +1069,11 @@ function updateTimeDisplay() {
   if (!currentMode) return;
   const container = document.getElementById('time-display');
   if (!container) return;
-  if (currentMode === 'morning') {
-    renderMorningTimeDisplay(container);
-  } else {
+  if (currentMode === 'evening') {
     renderEveningBudgetBar(container);
+  } else {
+    container.innerHTML = '';
   }
-}
-
-function renderMorningTimeDisplay(container) {
-  const total   = getTotalMin('morning');
-  const elapsed = getElapsedMin('morning');
-  const started = !!state.morning.globalStart;
-  const pct     = started && total > 0 ? Math.min((elapsed / total) * 100, 100) : 0;
-  const over    = elapsed > total;
-  container.innerHTML = `
-    <div class="time-track"><div class="time-fill${over ? ' over' : ''}" style="width:${pct}%"></div></div>
-    <div class="time-label">${started ? `${Math.round(elapsed)} / ${total} min` : `${total} min geplant`}</div>`;
 }
 
 function renderEveningBudgetBar(container) {
