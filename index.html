@@ -650,10 +650,11 @@ const TASKS = {
       { id:'pipi',      emoji:'🚽', label:'Pipi machen',           duration:3 },
       { id:'hands',     emoji:'🤲', label:'Hände waschen',          duration:2, followsId:'pipi' },
       { id:'teeth',     emoji:'🦷', label:'Zähne putzen',          duration:5 },
-      { id:'face',      emoji:'🧽', label:'Gesicht waschen',        duration:2 },
+      { id:'face',      emoji:'😊', label:'Gesicht waschen',        duration:2 },
+      { id:'cream',     emoji:'🧴', label:'Eincremen',              duration:2, conditional:'creamSeason' },
       { id:'hair',      emoji:'🪮', label:'Haare kämmen',           duration:2 },
       { id:'dress',     emoji:'👗', label:'Anziehen',               duration:5 },
-      { id:'sunscreen', emoji:'☀️', label:'Sonnencreme',            duration:5, conditional:true },
+      { id:'sunscreen', emoji:'☀️', label:'Sonnencreme',            duration:5, conditional:'sunscreen' },
       { id:'go',        emoji:'🥾', label:'Jacke + Schuhe + Los!', duration:10, isLast:true },
     ],
     choice: [
@@ -665,9 +666,11 @@ const TASKS = {
   evening: {
     deadline: { h:20, m:30 },
     mandatory: [
+      { id:'intim',  emoji:'🧽', label:'Intimbereich waschen', duration:3 },
       { id:'feet',   emoji:'🦶', label:'Füße waschen',         duration:5 },
       { id:'teeth',  emoji:'🦷', label:'Zähne putzen',          duration:5 },
-      { id:'face',   emoji:'🧽', label:'Gesicht waschen',        duration:2 },
+      { id:'face',   emoji:'😊', label:'Gesicht waschen',        duration:2 },
+      { id:'cream',  emoji:'🧴', label:'Eincremen',             duration:2 },
       { id:'hair',   emoji:'🪮', label:'Haare kämmen',          duration:2 },
       { id:'pipi',   emoji:'🚽', label:'Pipi machen',           duration:3 },
       { id:'hands',  emoji:'🤲', label:'Hände waschen',         duration:2, followsId:'pipi' },
@@ -722,8 +725,32 @@ function resetDaily() {
 
 // ── TASK HELPERS ─────────────────────────────────────────────────
 
+// Easter Sunday (Gregorian, anonymous algorithm)
+function easterSunday(y) {
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100;
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day   = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(y, month - 1, day);
+}
+
+// October 1st through Easter Sunday: normal cream instead of sunscreen
+function isCreamSeason(date = new Date()) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return d.getMonth() >= 9 || d <= easterSunday(d.getFullYear());
+}
+
 function visibleMandatory(mode) {
-  return TASKS[mode].mandatory.filter(t => !t.conditional || state.sunscreenEnabled);
+  return TASKS[mode].mandatory.filter(t => {
+    if (t.conditional === 'creamSeason') return isCreamSeason();
+    if (t.conditional === 'sunscreen')   return !isCreamSeason() && state.sunscreenEnabled;
+    return true;
+  });
 }
 
 function getAllTasks(mode) {
@@ -788,13 +815,19 @@ function syncOrder(mode) {
     ms.order.push(lastId);
   }
 
-  // Ensure followsId tasks stay directly after their parent
+  ms.order = attachFollowers(mode, ms.order);
+}
+
+// Ensure followsId tasks stay directly after their parent (e.g. hands after pipi)
+function attachFollowers(mode, order) {
+  let result = [...order];
   for (const t of getAllTasks(mode)) {
-    if (t.followsId && ms.order.includes(t.id) && ms.order.includes(t.followsId)) {
-      ms.order = ms.order.filter(id => id !== t.id);
-      ms.order.splice(ms.order.indexOf(t.followsId) + 1, 0, t.id);
+    if (t.followsId && result.includes(t.id) && result.includes(t.followsId)) {
+      result = result.filter(id => id !== t.id);
+      result.splice(result.indexOf(t.followsId) + 1, 0, t.id);
     }
   }
+  return result;
 }
 
 function allMandatoryDone(mode) {
@@ -1231,7 +1264,8 @@ function onDragMove(e) {
   const y = e.clientY;
 
   const choiceRow = listEl.querySelector('.task-row[data-choice]:not(.dragging)');
-  const siblings  = [...listEl.querySelectorAll('.task-row:not(.dragging):not([data-choice])')]
+  // Follower rows (hands) are no drop targets, so nothing lands between pipi and hands
+  const siblings  = [...listEl.querySelectorAll('.task-row:not(.dragging):not([data-choice]):not([data-follows])')]
     .filter(r => r.dataset.last !== 'true');
   const lastRow   = listEl.querySelector('.task-row[data-last="true"]');
 
@@ -1245,6 +1279,13 @@ function onDragMove(e) {
   else if (lastRow)   listEl.insertBefore(el, lastRow);
   else if (choiceRow) listEl.insertBefore(el, choiceRow);
   else                listEl.appendChild(el);
+
+  // Move follower rows along with the dragged row
+  let after = el;
+  for (const t of getAllTasks(currentMode).filter(t => t.followsId === el.dataset.id)) {
+    const f = listEl.querySelector(`.task-row[data-id="${t.id}"]`);
+    if (f) { after.after(f); after = f; }
+  }
 }
 
 function onDragEnd() {
@@ -1253,10 +1294,11 @@ function onDragEnd() {
 
   // Save new order from DOM
   const newOrder = [...dragState.listEl.querySelectorAll('.task-row')].map(r => r.dataset.id);
-  state[currentMode].order = newOrder;
+  state[currentMode].order = attachFollowers(currentMode, newOrder);
   save();
 
   cleanupDrag();
+  renderRoutine();
 }
 
 function onDragCancel() {
@@ -1274,6 +1316,8 @@ function cleanupDrag() {
 }
 
 function initDrag(listEl) {
+  if (listEl.dataset.dragInit) return; // renderRoutine calls this on every render
+  listEl.dataset.dragInit = '1';
   listEl.addEventListener('pointerdown', e => {
     const handle = e.target.closest('.drag-handle');
     if (!handle) return;
@@ -1493,7 +1537,7 @@ function openSettings() {
         <span class="setting-label">☀️ Sonnencreme</span>
         <button id="btn-sunscreen" class="toggle ${sunOn?'on':'off'}" onclick="toggleSunscreen()">${sunOn?'Ein ☀️':'Aus'}</button>
       </div>
-      <div class="weather-info">${wcText}</div>
+      <div class="weather-info">${isCreamSeason() ? 'Okt–Ostern: normale Creme statt Sonnencreme · ' : ''}${wcText}</div>
       <div class="modal-section">
         <div class="modal-section-title">🌅 Morgen-Wahlaufgaben</div>
         ${choiceRows(TASKS.morning.choice)}
