@@ -646,6 +646,7 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
 const TASKS = {
   morning: {
     deadline: { h:9, m:15 },
+    fixedChoice: 'cookie', // keine Auswahl: morgens gibt es immer den Keks
     mandatory: [
       { id:'pipi',      emoji:'🚽', label:'Pipi machen',           duration:3 },
       { id:'hands',     emoji:'🤲', label:'Hände waschen',          duration:2, followsId:'pipi' },
@@ -665,6 +666,7 @@ const TASKS = {
   },
   evening: {
     deadline: { h:20, m:30 },
+    fixedChoice: 'readbook', // keine Auswahl: abends wird immer vorgelesen
     mandatory: [
       { id:'intim',  emoji:'🧽', label:'Intimbereich waschen', duration:3 },
       { id:'feet',   emoji:'🦶', label:'Füße waschen',         duration:5 },
@@ -753,10 +755,21 @@ function visibleMandatory(mode) {
   });
 }
 
+// Wählbare Aktivitäten; mit fixedChoice nur diese eine
+function availableChoices(mode) {
+  const fixed = TASKS[mode].fixedChoice;
+  return TASKS[mode].choice.filter(t =>
+    fixed ? t.id === fixed : !(state.disabledChoices||[]).includes(t.id));
+}
+
+function ensureFixedChoice(mode) {
+  const fixed = TASKS[mode].fixedChoice;
+  if (fixed && state[mode].choiceId !== fixed) selectChoice(fixed);
+}
+
 function getAllTasks(mode) {
   if (mode === 'morning') {
-    const choice = TASKS[mode].choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
-    return [...visibleMandatory(mode), ...choice];
+    return [...visibleMandatory(mode), ...availableChoices(mode)];
   }
   // Abend: nur Pflicht + gewählte Wahlaufgabe
   const mandatory = visibleMandatory(mode);
@@ -861,6 +874,7 @@ function showRoutine(mode) {
   resetDaily();
   if (!state[mode].order) { state[mode].order = getDefaultOrder(mode); }
   syncOrder(mode);
+  ensureFixedChoice(mode);
   save();
   renderRoutine();
   switchScreen('screen-routine');
@@ -883,7 +897,7 @@ function renderRoutine() {
   if (mode === 'evening') {
     const mandatory  = visibleMandatory('evening');
     const choiceTask = ms.choiceId ? TASKS.evening.choice.find(t => t.id === ms.choiceId) : null;
-    const available  = TASKS.evening.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+    const available  = availableChoices('evening');
 
     // Pflichtaufgaben zuerst (Wahlaufgabe aus order ausfiltern)
     let html = order
@@ -902,7 +916,7 @@ function renderRoutine() {
     const nonLast    = mandatory.filter(t => !t.isLast);
     const lastTask   = mandatory.find(t => t.isLast);
     const choiceTask = ms.choiceId ? TASKS.morning.choice.find(t => t.id === ms.choiceId) : null;
-    const available  = TASKS.morning.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+    const available  = availableChoices('morning');
 
     let html = order
       .filter(id => nonLast.some(t => t.id === id))
@@ -974,7 +988,7 @@ function renderChoiceRow(task, ms, available) {
     <div class="task-emoji-big">${task.emoji}</div>
     <div class="task-text-group">
       <div class="task-name">${task.label}</div>
-      <span class="task-tag choice-tag">Wahlaufgabe</span>
+      <span class="task-tag choice-tag">${TASKS.evening.fixedChoice ? 'Zum Schluss' : 'Wahlaufgabe'}</span>
       ${swapChips}
     </div>
   </div>
@@ -1031,8 +1045,9 @@ function selectChoice(id) {
 }
 
 function showOpener(mode) {
+  if (TASKS[mode].fixedChoice) { ensureFixedChoice(mode); return; }
   if (state[mode].choiceId) return;
-  const available = TASKS[mode].choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+  const available = availableChoices(mode);
   if (!available.length) return;
   const overlay = document.getElementById('overlay-opener');
   const isMorning = mode === 'morning';
@@ -1080,7 +1095,7 @@ function updateMorningActivityEmoji() {
 }
 
 function showMorningChoicePick() {
-  const available = TASKS.morning.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+  const available = availableChoices('morning');
   if (!available.length) return;
 
   const choiceId = state.morning.choiceId;
@@ -1427,12 +1442,13 @@ function hideCompletion() {
 }
 
 function renderBedtimeChoices() {
-  const available = TASKS.evening.choice.filter(t => !(state.disabledChoices||[]).includes(t.id));
+  const available = availableChoices('evening');
   const selected  = state.evening.choiceId;
   const label     = document.getElementById('bedtime-choice-label');
   const opts      = document.getElementById('bedtime-choice-options');
   if (!label || !opts) return;
-  label.textContent = selected ? 'Schon gewählt — noch wechseln?' : 'Was möchtest du noch machen?';
+  label.textContent = TASKS.evening.fixedChoice ? 'Und jetzt:'
+    : selected ? 'Schon gewählt — noch wechseln?' : 'Was möchtest du noch machen?';
   opts.innerHTML = available.map(t =>
     `<button class="bedtime-choice-btn${selected === t.id ? ' selected' : ''}" onclick="selectBedtimeChoice('${t.id}')">
       <span class="bedtime-choice-emoji">${t.emoji}</span>
@@ -1538,18 +1554,18 @@ function openSettings() {
         <button id="btn-sunscreen" class="toggle ${sunOn?'on':'off'}" onclick="toggleSunscreen()">${sunOn?'Ein ☀️':'Aus'}</button>
       </div>
       <div class="weather-info">${isCreamSeason() ? 'Okt–Ostern: normale Creme statt Sonnencreme · ' : ''}${wcText}</div>
-      <div class="modal-section">
+      ${TASKS.morning.fixedChoice ? '' : `<div class="modal-section">
         <div class="modal-section-title">🌅 Morgen-Wahlaufgaben</div>
         ${choiceRows(TASKS.morning.choice)}
-      </div>
+      </div>`}
       <button class="btn-reset-evening" onclick="resetMorning()">↩️ Morgenroutine zurücksetzen</button>`;
   } else {
     title = '🌙 Abend-Einstellungen';
     html = `
-      <div class="modal-section">
+      ${TASKS.evening.fixedChoice ? '' : `<div class="modal-section">
         <div class="modal-section-title">🌙 Abend-Wahlaufgaben</div>
         ${choiceRows(TASKS.evening.choice)}
-      </div>
+      </div>`}
       <button class="btn-reset-evening" onclick="resetEvening()">↩️ Abendroutine zurücksetzen</button>`;
   }
 
