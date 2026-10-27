@@ -225,8 +225,8 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   animation:confettiFly var(--cd) ease-out forwards;
 }
 
-/* ══ MORNING ACTIVITY EMOJI ══ */
-#morning-activity-emoji {
+/* ══ ACTIVITY EMOJI (wächst mit dem Fortschritt) ══ */
+#activity-emoji {
   position:absolute;
   left:50%; top:50%;
   transform:translate(-50%,-50%);
@@ -236,10 +236,10 @@ html, body { height:100%; font-family: system-ui,-apple-system,'Segoe UI',Helvet
   transition:font-size 0.4s ease, opacity 0.3s ease;
   pointer-events:none;
 }
-#morning-activity-emoji.visible { opacity:1; }
-#morning-activity-emoji.emoji-stage-2 { font-size:2.2rem; }
-#morning-activity-emoji.emoji-stage-3 { font-size:3.2rem; }
-#morning-activity-emoji.emoji-stage-4 { font-size:4.5rem; }
+#activity-emoji.visible { opacity:1; }
+#activity-emoji.emoji-stage-2 { font-size:2.2rem; }
+#activity-emoji.emoji-stage-3 { font-size:3.2rem; }
+#activity-emoji.emoji-stage-4 { font-size:4.5rem; }
 
 /* ══ MORNING OPENER OVERLAY ══ */
 #overlay-opener {
@@ -523,7 +523,7 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
     <div class="routine-header-top">
       <button class="back-btn" onclick="showHome()">‹</button>
       <div class="time-display" id="time-display"></div>
-      <div id="morning-activity-emoji"></div>
+      <div id="activity-emoji"></div>
     </div>
   </div>
   <div class="routine-body">
@@ -556,7 +556,7 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
 <!-- ══ COMPLETION OVERLAY ══ -->
 <div id="overlay-completion" class="hidden" onclick="hideCompletion()">
   <div class="completion-inner">
-    <div class="completion-title">Super gemacht!&nbsp;🎉</div>
+    <div class="completion-title" id="completion-title">Super gemacht!&nbsp;🎉</div>
     <div class="stars-wrap" id="stars-wrap"></div>
     <div class="fox-wrap" id="fox-wrap"></div>
     <div class="completion-hint">Antippen zum Weitermachen ✨</div>
@@ -931,8 +931,8 @@ function renderRoutine() {
     if (lastTask) html += renderRow(lastTask, ms);
 
     list.innerHTML = html;
-    updateMorningActivityEmoji();
   }
+  updateActivityEmoji();
 
   initDrag(list);
   parseEmoji(list);
@@ -1014,7 +1014,11 @@ function renderMorningChoiceRow(task, ms, available) {
       `<button class="choice-swap-btn" onclick="selectChoice('${t.id}')">${t.emoji} ${t.label}</button>`
     ).join('')
   }</div>`;
-  return `<div class="task-row" data-id="${task.id}" data-choice="true" style="min-height:${h}px">
+  const done = ms.completed.includes(task.id);
+  const checkBtn = done
+    ? `<button class="btn-check" onclick="unfinishTask('${task.id}')">✅</button>`
+    : `<button class="btn-check" onclick="finishTask('${task.id}')">✓</button>`;
+  return `<div class="task-row${done ? ' done' : ''}" data-id="${task.id}" data-choice="true" style="min-height:${h}px">
   <div class="drag-handle" style="visibility:hidden">⠿</div>
   <div class="task-content">
     <div class="task-emoji-big">${task.emoji}</div>
@@ -1024,7 +1028,7 @@ function renderMorningChoiceRow(task, ms, available) {
       <span class="task-tag choice-tag">Freie Zeit</span>
       ${swapChips}
     </div>
-  </div>
+  </div>${checkBtn}
 </div>`;
 }
 
@@ -1073,24 +1077,25 @@ function showOpener(mode) {
   parseEmoji(overlay);
 }
 
-function updateMorningActivityEmoji() {
-  const el = document.getElementById('morning-activity-emoji');
+function updateActivityEmoji() {
+  const el = document.getElementById('activity-emoji');
   if (!el) return;
-  const ms = state.morning;
-  if (!ms.choiceId) {
+  const mode = currentMode;
+  const ms = mode && state[mode];
+  if (!ms || !ms.choiceId) {
     el.textContent = '';
     el.className = '';
     return;
   }
-  const task = TASKS.morning.choice.find(t => t.id === ms.choiceId);
-  const doneCount = visibleMandatory('morning')
-    .filter(t => !t.isLast)
-    .filter(t => ms.completed.includes(t.id))
-    .length;
+  const task = TASKS[mode].choice.find(t => t.id === ms.choiceId);
+  // Fortschritt relativ zur Aufgabenzahl, damit 8 Morgen- und 10 Abendaufgaben gleich wachsen
+  const counted = visibleMandatory(mode).filter(t => !t.isLast);
+  const done = counted.filter(t => ms.completed.includes(t.id)).length;
+  const frac = counted.length ? done / counted.length : 0;
   let stage = 1;
-  if (doneCount >= 5) stage = 4;
-  else if (doneCount >= 3) stage = 3;
-  else if (doneCount >= 1) stage = 2;
+  if (frac >= 5/8) stage = 4;
+  else if (frac >= 3/8) stage = 3;
+  else if (done >= 1) stage = 2;
   el.textContent = task ? task.emoji : '';
   el.className = `visible emoji-stage-${stage}`;
   parseEmoji(el);
@@ -1242,7 +1247,8 @@ function finishTask(id) {
       setTimeout(() => showCompletion(), 400);
       return;
     }
-    if (allPreGoMandatoryDone('morning')) {
+    // Fester Keks wird abgehakt wie eine Aufgabe; Auswahl-Overlay nur ohne fixedChoice
+    if (!TASKS.morning.fixedChoice && allPreGoMandatoryDone('morning')) {
       setTimeout(() => { renderRoutine(); showMorningChoicePick(); }, 400);
       return;
     }
@@ -1254,7 +1260,7 @@ function finishTask(id) {
   setTimeout(() => {
     renderRoutine();
     updateTimeDisplay();
-    if (mode === 'morning') updateMorningActivityEmoji();
+    updateActivityEmoji();
   }, 320);
 }
 
@@ -1424,12 +1430,14 @@ function confirmChoice(id) {
   document.getElementById('overlay-choice-pick').classList.add('hidden');
   document.getElementById('overlay-opener').classList.add('hidden');
   selectChoice(id);
-  updateMorningActivityEmoji();
+  updateActivityEmoji();
 }
 
 function showCompletion() {
   clearInterval(timeIv); timeIv = null;
   document.getElementById('fox-wrap').innerHTML = BUDDY_SVG;
+  document.getElementById('completion-title').innerHTML = currentMode === 'morning'
+    ? 'Viel Spaß in der Kita!&nbsp;🎒' : 'Super gemacht!&nbsp;🎉';
   document.getElementById('stars-wrap').innerHTML = STAR_DATA.map((s,i) =>
     `<div class="star" style="top:${s.t};left:${s.l};--d:${s.d};--dl:${s.dl}">${['⭐','✨','🌟','💫'][i%4]}</div>`
   ).join('');
