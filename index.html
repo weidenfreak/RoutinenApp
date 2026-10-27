@@ -474,6 +474,7 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
   align-items:center; gap:14px; padding:24px 20px; width:100%; max-width:420px;
 }
 #bedtime-fox-wrap { width:min(90px,22vw); transition:opacity .9s ease; }
+#bedtime-fox-wrap.sleeping { width:min(260px,70vw); }
 #bedtime-choice-wrap {
   width:100%; background:rgba(255,255,255,.8); border-radius:var(--r-lg);
   padding:16px 14px 12px; transition:background 4s ease;
@@ -1384,35 +1385,51 @@ const BUDDY_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 145" 
   <ellipse cx="60" cy="134" rx="13" ry="8" fill="#F07020"/>
 </svg>`;
 
-const SLEEPING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 100" width="100%" height="100%">
-  <!-- Schwanz (links, nach oben geschwungen) -->
-  <path d="M26,72 Q4,54 10,30 Q16,10 30,16 Q40,22 36,42 Q30,58 38,70 Z" fill="#F07020"/>
-  <ellipse cx="32" cy="64" rx="8" ry="5" fill="#FFF8F0" transform="rotate(30 32 64)"/>
-  <!-- Körper (liegend) -->
-  <ellipse cx="78" cy="65" rx="52" ry="24" fill="#F07020"/>
-  <ellipse cx="78" cy="70" rx="34" ry="15" fill="#FFF8F0"/>
-  <!-- Pfoten vorne -->
-  <ellipse cx="120" cy="85" rx="16" ry="7" fill="#F07020" transform="rotate(-12 120 85)"/>
-  <ellipse cx="100" cy="87" rx="14" ry="7" fill="#F07020" transform="rotate(5 100 87)"/>
-  <!-- Ohren (zeigen nach oben) -->
-  <polygon points="112,22 104,4 128,18" fill="#F07020"/>
-  <polygon points="150,20 158,2 138,18" fill="#F07020"/>
-  <polygon points="114,21 109,8 125,17" fill="#F5A0A0"/>
-  <polygon points="149,19 154,7 140,17" fill="#F5A0A0"/>
-  <!-- Kopf -->
-  <circle cx="128" cy="40" r="27" fill="#F07020"/>
-  <!-- Schnauze -->
-  <ellipse cx="148" cy="54" rx="14" ry="10" fill="#FFF8F0"/>
-  <!-- Rötung -->
-  <circle cx="118" cy="48" r="7" fill="#F09070" opacity="0.35"/>
-  <circle cx="148" cy="44" r="6" fill="#F09070" opacity="0.35"/>
-  <!-- Geschlossene Augen -->
-  <path d="M116,34 Q122,29 128,34" fill="none" stroke="#1A0A00" stroke-width="2.5" stroke-linecap="round"/>
-  <path d="M133,31 Q139,26 145,31" fill="none" stroke="#1A0A00" stroke-width="2.5" stroke-linecap="round"/>
-  <!-- Nase -->
-  <ellipse cx="153" cy="52" rx="3.5" ry="2.5" fill="#1A0A00"/>
-  <!-- Mund (lächelnd) -->
-  <path d="M148,57 Q152,61 156,57" fill="none" stroke="#1A0A00" stroke-width="1.8" stroke-linecap="round"/>
+const SLEEPING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 135" width="100%" height="100%">
+  <!-- Bettbeine -->
+  <rect x="20"  y="112" width="8" height="16" rx="2" fill="#7A4A24"/>
+  <rect x="176" y="112" width="8" height="16" rx="2" fill="#7A4A24"/>
+  <!-- Fußteil -->
+  <rect x="10" y="74" width="12" height="46" rx="5" fill="#A0673A"/>
+  <!-- Bettrahmen + Matratze -->
+  <rect x="14" y="102" width="176" height="16" rx="4" fill="#A0673A"/>
+  <rect x="20" y="88"  width="164" height="18" rx="6" fill="#F7F3EA"/>
+  <!-- Kopfteil -->
+  <rect x="180" y="26" width="14" height="94" rx="6" fill="#A0673A"/>
+  <circle cx="187" cy="34" r="4" fill="#7A4A24"/>
+  <!-- Kissen -->
+  <ellipse cx="160" cy="82" rx="24" ry="11" fill="#E4DDF7" stroke="#C9BFE6" stroke-width="1.5"/>
+  <!-- Schwanz guckt unten aus der Decke -->
+  <path d="M40,80 Q14,74 18,52 Q22,38 34,44 Q42,50 36,64 Q34,72 46,76 Z" fill="#F07020"/>
+  <ellipse cx="22" cy="48" rx="6" ry="5" fill="#FFF8F0" transform="rotate(-30 22 48)"/>
+  <!-- Kopf auf dem Kissen -->
+  <g transform="translate(52,34) scale(.75)">
+    <polygon points="112,22 104,4 128,18" fill="#F07020"/>
+    <polygon points="150,20 158,2 138,18" fill="#F07020"/>
+    <polygon points="114,21 109,8 125,17" fill="#F5A0A0"/>
+    <polygon points="149,19 154,7 140,17" fill="#F5A0A0"/>
+    <circle cx="128" cy="40" r="27" fill="#F07020"/>
+    <ellipse cx="148" cy="54" rx="14" ry="10" fill="#FFF8F0"/>
+    <circle cx="118" cy="48" r="7" fill="#F09070" opacity="0.35"/>
+    <circle cx="148" cy="44" r="6" fill="#F09070" opacity="0.35"/>
+    <path d="M116,34 Q122,29 128,34" fill="none" stroke="#1A0A00" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M133,31 Q139,26 145,31" fill="none" stroke="#1A0A00" stroke-width="2.5" stroke-linecap="round"/>
+    <ellipse cx="153" cy="52" rx="3.5" ry="2.5" fill="#1A0A00"/>
+    <path d="M148,57 Q152,61 156,57" fill="none" stroke="#1A0A00" stroke-width="1.8" stroke-linecap="round"/>
+  </g>
+  <!-- Bettdecke -->
+  <path d="M20,112 L20,86 Q28,64 68,62 Q108,58 134,68 Q148,74 148,90 L148,112 Z" fill="#7B9FD4"/>
+  <path d="M126,66 Q146,72 148,90" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+  <circle cx="50"  cy="82"  r="2.5" fill="#FFF5B6"/>
+  <circle cx="78"  cy="94"  r="2.5" fill="#FFF5B6"/>
+  <circle cx="104" cy="78"  r="2.5" fill="#FFF5B6"/>
+  <circle cx="118" cy="100" r="2.5" fill="#FFF5B6"/>
+  <circle cx="40"  cy="102" r="2.5" fill="#FFF5B6"/>
+  <!-- Pfote auf der Decke -->
+  <ellipse cx="134" cy="76" rx="9" ry="5" fill="#F07020" transform="rotate(-15 134 76)"/>
+  <!-- Zzz -->
+  <text x="120" y="30" font-family="sans-serif" font-weight="800" font-size="12" fill="#FFF5B6">z</text>
+  <text x="106" y="18" font-family="sans-serif" font-weight="800" font-size="17" fill="#FFF5B6">Z</text>
 </svg>`;
 
 const STAR_DATA = [
@@ -1489,6 +1506,7 @@ function showBedtime() {
 
   // Reset
   foxWrap.innerHTML  = BUDDY_SVG;
+  foxWrap.classList.remove('sleeping');
   foxWrap.style.opacity = '1';
   msg.textContent    = '';
   msg.className      = '';
@@ -1512,6 +1530,7 @@ function showBedtime() {
     foxWrap.style.opacity = '0';
     setTimeout(() => {
       foxWrap.innerHTML = SLEEPING_SVG;
+      foxWrap.classList.add('sleeping');
       foxWrap.style.opacity = '1';
     }, 900);
   }, 2500);
