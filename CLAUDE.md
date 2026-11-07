@@ -13,7 +13,7 @@ Single-page PWA for a 4-year-old child's morning/evening routine. No build step 
 | `index.html` | Entire app: inline CSS + HTML + JS |
 | `sw.js` | Service Worker — offline cache (same-origin only) |
 | `manifest.json` | PWA manifest — fullscreen, fox icon |
-| `twemoji/` | Twemoji 17.0.3 lokal (Script + nur die genutzten SVGs). Neues Emoji → SVG von `cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/<codepoint>.svg` nach `twemoji/svg/` legen und in `sw.js` (`EMOJI`) eintragen |
+| `emoji/` | Google-Noto-Emoji-SVGs lokal (nur die genutzten) + Twemoji-Script nur als Parser. Neues Emoji → `fonts.gstatic.com/s/e/notoemoji/latest/<codepoint>/emoji.svg` als `emoji/svg/<codepoint>.svg` speichern und in `sw.js` (`EMOJI`) eintragen |
 
 ## Local Dev
 

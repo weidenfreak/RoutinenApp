@@ -501,7 +501,7 @@ img.emoji { height:1em; width:1em; vertical-align:-.1em; display:inline-block; }
 #bedtime-hint { font-size:.95rem; color:#888; transition:color 1.8s ease; cursor:pointer; padding:6px 20px; }
 #bedtime-hint.dark { color:rgba(255,245,182,.5); }
 </style>
-<script src="twemoji/twemoji.min.js"></script>
+<script src="emoji/twemoji.min.js"></script>
 </head>
 <body>
 
@@ -941,8 +941,8 @@ function renderRoutine() {
 
 function parseEmoji(el) {
   if (typeof twemoji === 'undefined') return;
-  // SVGs liegen lokal in twemoji/svg/ — neue Emojis dort nachlegen (+ in sw.js)!
-  twemoji.parse(el, { base:'twemoji/', folder:'svg', ext:'.svg' });
+  // Noto-SVGs liegen lokal in emoji/svg/ — neue Emojis dort nachlegen (+ in sw.js)!
+  twemoji.parse(el, { base:'emoji/', folder:'svg', ext:'.svg' });
   // Fehlt ein SVG, statt kaputtem Bild das System-Emoji zeigen
   el.querySelectorAll('img.emoji').forEach(img => {
     img.onerror = () => img.replaceWith(document.createTextNode(img.alt));
